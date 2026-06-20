@@ -31,7 +31,6 @@
     font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
   a{color:var(--accent);text-decoration:none}
   .wrap{max-width:1240px;margin:0 auto;padding:18px 20px 60px;}
-  /* top bar */
   .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
   .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:.2px}
   .brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
@@ -53,13 +52,11 @@
   .btn.danger:hover{background:var(--redbg);border-color:var(--red)}
   .btn.good{color:var(--green);border-color:var(--greenbg)}
   .btn.good:hover{background:var(--greenbg);border-color:var(--green)}
-  /* nav */
   nav.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
     padding:5px;box-shadow:var(--shadow);margin-bottom:18px;overflow:auto}
   nav.tabs button{flex:0 0 auto;background:transparent;border:none;padding:9px 16px;border-radius:10px;
     cursor:pointer;color:var(--ink2);font-weight:600}
   nav.tabs button.active{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
-  /* kpi */
   .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
   @media(max-width:1080px){.kpis{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:560px){.kpis{grid-template-columns:repeat(2,1fr)}}
@@ -70,7 +67,6 @@
   .kpi .val{font-size:24px;font-weight:760;margin-top:6px}
   .kpi .meta{font-size:12px;color:var(--ink2);margin-top:3px}
   .kpi.good .val{color:var(--green)} .kpi.red .val{color:var(--red)}
-  /* panels / grid */
   .grid{display:grid;gap:14px}
   .g2{grid-template-columns:1.55fr 1fr}
   @media(max-width:980px){.g2{grid-template-columns:1fr}}
@@ -79,7 +75,6 @@
   .panel .hd h3{margin:0;font-size:14px}
   .panel .bd{padding:14px 16px}
   .chartbox{position:relative;height:240px}
-  /* feed */
   .feed{max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:2px}
   .fitem{display:flex;gap:10px;align-items:flex-start;padding:9px 6px;border-bottom:1px solid var(--line)}
   .fitem:last-child{border-bottom:none}
@@ -87,7 +82,6 @@
   .fico.lead{background:var(--violetbg);color:var(--violet)} .fico.money{background:var(--greenbg);color:var(--green)}
   .fico.ad{background:var(--amberbg);color:var(--amber)} .fico.batch{background:var(--panel2);color:var(--ink2)}
   .ftxt{font-size:13px} .ftime{font-size:11px;color:var(--muted)}
-  /* table */
   table{width:100%;border-collapse:collapse}
   th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
   th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;position:sticky;top:0;background:var(--panel)}
@@ -109,7 +103,6 @@
   .hide{display:none!important}
   .sectiontitle{font-size:18px;font-weight:720;margin:2px 0 14px}
   .checkcol{width:34px}
-  /* modal */
   .modal-bg{position:fixed;inset:0;background:rgba(8,12,24,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
   .modal-bg.show{display:flex}
   .modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);width:min(560px,100%);max-height:88vh;overflow:auto}
@@ -122,10 +115,10 @@
   .segchk{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:12px;cursor:pointer;background:var(--panel2)}
   .segchk.on{background:var(--violetbg);color:var(--violet);border-color:transparent}
   .modal .ft{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--line)}
-  .banner{background:var(--amberbg);color:var(--amber);border:1px solid transparent;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:600}
+  .banner{background:var(--amberbg);color:var(--amber);border:1px solid transparent;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .kv{display:flex;gap:8px;font-size:12px;color:var(--ink2);flex-wrap:wrap}
   .kv b{color:var(--ink)}
-  code.payload{display:block;white-space:pre-wrap;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:11px;max-height:200px;overflow:auto}
+  code.payload{display:block;white-space:pre-wrap;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:11px;max-height:220px;overflow:auto}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
     padding:10px 16px;border-radius:10px;font-size:13px;box-shadow:var(--shadow);z-index:80;opacity:0;transition:.2s;pointer-events:none}
   .toast.show{opacity:1}
@@ -161,6 +154,7 @@
   </nav>
 
   <div id="ctxBanner" class="banner hide"></div>
+  <div id="importBanner" class="banner hide"></div>
 
   <!-- ===================== DASHBOARD ===================== -->
   <section id="tab-dashboard">
@@ -233,7 +227,7 @@
       <button class="btn primary" id="addBuyerBtn">+ Add buyer</button>
     </div>
     <div class="banner" style="background:var(--panel2);color:var(--ink2);font-weight:500">
-      The public application form (<b>/buyers/apply</b>) lives in the full app. New applicants land here as <b>pending</b> for approval. Default pricing is <b>per-lead</b>, set per buyer.
+      Buyers persist in <b>Supabase</b> and are added here directly as <b>active</b> (no public form). Tick <b>CASL agreement</b> when onboarding a buyer who agreed to honor consent. Pricing is <b>per-lead, set per buyer</b> (overridable per batch).
     </div>
     <div class="panel">
       <div class="tablewrap"><table>
@@ -274,7 +268,7 @@
   <section id="tab-money" class="hide">
     <div class="sectiontitle">Money — P&amp;L by segment</div>
     <div class="banner" style="background:var(--panel2);color:var(--ink2);font-weight:500">
-      Spend is <b>live from Meta</b>. Revenue is from invoices tracked here. Connect <b>Stripe</b> in the full app to auto-create invoices and flip them to paid by webhook.
+      Spend is <b>live from Meta</b>. Revenue is from <b>Supabase invoices</b> (mark paid here). Connect <b>Stripe</b> in the full app to auto-create invoices and flip them to paid by webhook.
     </div>
     <div class="panel" style="margin-bottom:22px">
       <div class="tablewrap"><table>
@@ -293,7 +287,6 @@
   </section>
 </div>
 
-<!-- modal -->
 <div class="modal-bg" id="modalBg"><div class="modal"><div class="hd"><h3 id="modalTitle"></h3><span style="flex:1"></span><button class="btn ghost sm" id="modalX">✕</button></div><div class="bd" id="modalBody"></div><div class="ft" id="modalFoot"></div></div></div>
 <div class="toast" id="toast"></div>
 
@@ -302,6 +295,8 @@
 /* ============ config ============ */
 const META = "mcp__2859ede8-9c7e-416b-8b4e-736c48aee4c7";
 const HS   = "mcp__d186346b-7230-4528-91c1-01ba7f42c5ad";
+const SUPA = "mcp__f10d0d44-9fb2-462e-ba4c-3ab63c0b1c06";
+const SUPA_PROJECT = "pqhejgzbmhhaxaraklgl";
 const AD_ACCOUNTS = [
   {id:"822976640501914",  name:"GetInsured BC 1"},
   {id:"1570949750579308", name:"GetInsured BC 2"},
@@ -314,24 +309,20 @@ const HS_PROPS_MIN  = ["firstname","lastname","email","phone","city","state","cr
 /* ============ state ============ */
 const state = {
   leads:[], leadsTotal:0, ads:[], adsets:[], spendBySeg:{}, leadsBySeg:{},
-  conn:{meta:"off",hubspot:"off"}, win:"last_30d", loaded:false
+  conn:{meta:"off",hubspot:"off",supabase:"off"}, win:"last_30d", loaded:false
 };
+let buyers=[], batches=[], invoices=[], routed={}, revSeg={};
 const store = {
   get(k,d){ try{const v=localStorage.getItem("sw_"+k);return v?JSON.parse(v):d;}catch(e){return d;} },
   set(k,v){ try{localStorage.setItem("sw_"+k,JSON.stringify(v));}catch(e){} }
 };
-let buyers   = store.get("buyers",[]);
-let batches  = store.get("batches",[]);
-let invoices = store.get("invoices",[]);
-let events   = store.get("events",[]);
-let overrides= store.get("lead_overrides",{}); // hubspotId -> {batched, batch_id}
+let events = store.get("events",[]);
 const settings = Object.assign({scale_step:0.2, default_price_per_lead:25}, store.get("settings",{}));
 
 /* ============ helpers ============ */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cad=n=>"$"+(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-const uid=()=>Math.random().toString(36).slice(2,9);
 function money(s){ if(s==null)return 0; if(typeof s==="number")return s; if(/not available/i.test(s))return 0;
   const n=parseFloat(String(s).replace(/[^0-9.\-]/g,"")); return isNaN(n)?0:n; }
 function intval(s){ if(s==null)return 0; if(/not available/i.test(String(s)))return 0;
@@ -341,23 +332,18 @@ function cprVal(r){ return money(r&&typeof r==="object"?r.value:r); }
 function parseSegment(name){
   if(!name)return "—";
   const parts=String(name).split("—").map(x=>x.trim()).filter(Boolean);
-  let label = parts.length>1?parts[1]:parts[0];
-  const low=label.toLowerCase();
+  let label=parts.length>1?parts[1]:parts[0]; const low=label.toLowerCase();
   for(const s of SEGMENTS){ if(low.replace(/\s+/g,"-").includes(s)) return s; }
-  if(low.includes("self"))return "self-employed";
-  if(low.includes("55"))return "55plus";
-  if(low.includes("senior"))return "seniors";
-  if(low.includes("parent"))return "parents";
-  if(low.includes("trade"))return "trades";
-  if(low.includes("newcomer"))return "newcomers";
+  if(low.includes("self"))return "self-employed"; if(low.includes("55"))return "55plus";
+  if(low.includes("senior"))return "seniors"; if(low.includes("parent"))return "parents";
+  if(low.includes("trade"))return "trades"; if(low.includes("newcomer"))return "newcomers";
   return label||"—";
 }
-function timeAgo(d){ const t=(Date.now()-new Date(d).getTime())/1000;
+function timeAgo(d){ if(!d)return ""; const t=(Date.now()-new Date(d).getTime())/1000;
   if(t<60)return "just now"; if(t<3600)return Math.floor(t/60)+"m ago";
   if(t<86400)return Math.floor(t/3600)+"h ago"; return Math.floor(t/86400)+"d ago"; }
-function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2400); }
 function logEvent(type,text){ events.unshift({ts:new Date().toISOString(),type,text}); events=events.slice(0,200); store.set("events",events); renderFeed(); }
-function persist(){ store.set("buyers",buyers); store.set("batches",batches); store.set("invoices",invoices); store.set("lead_overrides",overrides); }
 
 /* ============ MCP plumbing ============ */
 async function callTool(name,args){
@@ -371,12 +357,27 @@ async function callTool(name,args){
   return data;
 }
 function metaEntities(data){
-  // data: {ad_entities:"[...]", summary:{...}}  OR already parsed
   if(!data) return [];
   let raw=data.ad_entities!==undefined?data.ad_entities:data;
   if(typeof raw==="string"){ try{ raw=JSON.parse(raw); }catch(e){ raw=[]; } }
   return Array.isArray(raw)?raw:[];
 }
+/* --- Supabase via execute_sql --- */
+function sqlLit(v){ return v==null?"null":"'"+String(v).replace(/'/g,"''")+"'"; }
+function sqlJson(o){ return "'"+JSON.stringify(o).replace(/'/g,"''")+"'::jsonb"; }
+async function supa(sql){
+  if(!window.cowork||!window.cowork.callMcpTool) throw new Error("no-cowork");
+  const r=await window.cowork.callMcpTool(SUPA+"__execute_sql",{project_id:SUPA_PROJECT,query:sql});
+  if(r&&r.isError) throw new Error((r.content&&r.content[0]&&r.content[0].text)||"sql error");
+  let p=r?(r.structuredContent!=null?r.structuredContent:(r.content&&r.content[0]&&r.content[0].text)):null;
+  let text=typeof p==="string"?p:(p&&typeof p.result==="string"?p.result:JSON.stringify(p||""));
+  const m=text.match(/<untrusted-data-[^>]*>\s*([\s\S]*?)\s*<\/untrusted-data-/);
+  let body=(m?m[1]:text).trim();
+  if(!body) return [];
+  if(body[0]!=="["&&body[0]!=="{") return [];
+  try{ return JSON.parse(body); }catch(e){ return []; }
+}
+const rpcRow = rows => (Array.isArray(rows)&&rows[0])?(rows[0].result||rows[0]):null;
 
 /* ============ data loads ============ */
 async function loadLeads(){
@@ -386,11 +387,9 @@ async function loadLeads(){
       sorts:[{propertyName:"createdate",direction:"DESCENDING"}], properties:HS_PROPS_FULL,
       chatInsights:{userIntent:"View and route inbound insurance leads",satisfaction:"NEUTRAL"}});
   }catch(e){
-    try{
-      res=await callTool(HS+"__search_crm_objects",{objectType:"contacts",limit:100,
-        sorts:[{propertyName:"createdate",direction:"DESCENDING"}], properties:HS_PROPS_MIN,
-        chatInsights:{userIntent:"View and route inbound insurance leads",satisfaction:"NEUTRAL"}});
-    }catch(e2){ state.conn.hubspot="off"; throw e2; }
+    res=await callTool(HS+"__search_crm_objects",{objectType:"contacts",limit:100,
+      sorts:[{propertyName:"createdate",direction:"DESCENDING"}], properties:HS_PROPS_MIN,
+      chatInsights:{userIntent:"View and route inbound insurance leads",satisfaction:"NEUTRAL"}});
   }
   state.conn.hubspot="ok";
   const rows=(res&&res.results)||[];
@@ -405,42 +404,44 @@ async function loadLeads(){
       segment:seg, source:p.hs_latest_source||p.hs_analytics_source||"—",
       lifecycle:p.lifecyclestage||"", leadStatus:p.hs_lead_status||"" };
   });
-  // segment lead counts
   state.leadsBySeg={};
   state.leads.forEach(l=>{ if(l.segment&&l.segment!=="—") state.leadsBySeg[l.segment]=(state.leadsBySeg[l.segment]||0)+1; });
 }
-
 async function loadAds(){
-  const win=state.win;
-  const ads=[], adsets=[]; let anyOk=false;
+  const win=state.win; const ads=[], adsets=[]; let anyOk=false;
   for(const acc of AD_ACCOUNTS){
     try{
       const a=await callTool(META+"__ads_get_ad_entities",{ad_account_id:acc.id,level:"ad",date_preset:win,limit:100,
         fields:["id","name","status","spend","impressions","clicks","ctr","adset_id","campaign_id","results","cost_per_result"]});
-      metaEntities(a).forEach(e=>{
-        const spend=money(e.amount_spent), leads=resCount(e.results);
-        ads.push({id:e.id,name:e.name,status:e.status,acct:acc.name,acctId:acc.id,
-          adset_id:e.adset_id,segment:parseSegment(e.name),
-          spend, leads, cpl:leads>0?spend/leads:cprVal(e.cost_per_result),
-          ctr:money(e.ctr), impressions:intval(e.impressions)});
-      });
+      metaEntities(a).forEach(e=>{ const spend=money(e.amount_spent), leads=resCount(e.results);
+        ads.push({id:e.id,name:e.name,status:e.status,acct:acc.name,acctId:acc.id,adset_id:e.adset_id,
+          segment:parseSegment(e.name),spend,leads,cpl:leads>0?spend/leads:cprVal(e.cost_per_result),
+          ctr:money(e.ctr),impressions:intval(e.impressions)}); });
       anyOk=true;
-    }catch(e){ /* skip account */ }
+    }catch(e){}
     try{
       const s=await callTool(META+"__ads_get_ad_entities",{ad_account_id:acc.id,level:"adset",date_preset:win,limit:50,
         fields:["id","name","status","daily_budget","lifetime_budget","spend"]});
-      metaEntities(s).forEach(e=>{
-        adsets.push({id:e.id,name:e.name,status:e.status,acct:acc.name,acctId:acc.id,
-          daily_budget:money(e.daily_budget), daily_raw:e.daily_budget, spend:money(e.amount_spent),
-          cbo:/uses ad set daily budget|not available/i.test(String(e.daily_budget||""))&&money(e.daily_budget)===0});
-      });
+      metaEntities(s).forEach(e=>{ adsets.push({id:e.id,name:e.name,status:e.status,acct:acc.name,acctId:acc.id,
+        daily_budget:money(e.daily_budget),spend:money(e.amount_spent),
+        cbo:/uses ad set daily budget|not available/i.test(String(e.daily_budget||""))&&money(e.daily_budget)===0}); });
     }catch(e){}
   }
-  state.conn.meta=anyOk?"ok":"off";
-  state.ads=ads; state.adsets=adsets;
-  // spend by segment
+  state.conn.meta=anyOk?"ok":"off"; state.ads=ads; state.adsets=adsets;
   state.spendBySeg={};
   ads.forEach(a=>{ const k=a.segment||"—"; if(!state.spendBySeg[k])state.spendBySeg[k]={spend:0,leads:0}; state.spendBySeg[k].spend+=a.spend; state.spendBySeg[k].leads+=a.leads; });
+}
+async function loadStore(){
+  try{
+    buyers=await supa("select id,company,contact_name,email,phone,segments_wanted,provinces_wanted,coalesce(price_per_lead,0)::float as price_per_lead,notes,status,agreement_consent,agreement_timestamp,created_at from buyers order by created_at desc");
+    batches=await supa("select b.id,b.name,b.buyer_id,coalesce(bu.company,'—') as buyer_company,b.segment_filter,b.exclusivity,b.lead_count,coalesce(b.total_price,0)::float as total_price,b.status,b.sent_at,b.created_at from batches b left join buyers bu on bu.id=b.buyer_id order by b.created_at desc");
+    invoices=await supa("select i.id,i.batch_id,i.buyer_id,coalesce(i.amount,0)::float as amount,i.status,i.due_date,i.paid_at,i.created_at,coalesce(bu.company,'—') as buyer_company,coalesce(ba.name,'—') as batch_name from invoices i left join buyers bu on bu.id=i.buyer_id left join batches ba on ba.id=i.batch_id order by i.created_at desc");
+    const rr=await supa("select hubspot_contact_id,status from leads where hubspot_contact_id is not null");
+    routed={}; rr.forEach(r=>routed[r.hubspot_contact_id]=r.status);
+    const rs=await supa("select l.segment, sum(bl.sale_price)::float as rev from invoices i join batches b on b.id=i.batch_id join batch_leads bl on bl.batch_id=b.id join leads l on l.id=bl.lead_id where i.status='paid' group by l.segment");
+    revSeg={}; rs.forEach(r=>revSeg[r.segment]=r.rev);
+    state.conn.supabase="ok";
+  }catch(e){ state.conn.supabase="off"; throw e; }
 }
 
 /* ============ derived ============ */
@@ -449,22 +450,24 @@ function totalMetaLeads(){ return state.ads.reduce((s,a)=>s+a.leads,0); }
 function leadsToday(){ const d=new Date();d.setHours(0,0,0,0); return state.leads.filter(l=>new Date(l.created)>=d).length; }
 function leadsThisWeek(){ const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()); return state.leads.filter(l=>new Date(l.created)>=d).length; }
 function isQualified(l){ return /qualified/i.test(l.leadStatus)||/(marketingqualifiedlead|salesqualifiedlead|opportunity|customer)/i.test(l.lifecycle); }
-function revenuePaid(){ return invoices.filter(i=>i.status==="paid").reduce((s,i)=>s+i.amount,0); }
+function revenuePaid(){ return invoices.filter(i=>i.status==="paid").reduce((s,i)=>s+Number(i.amount||0),0); }
 function activeBuyers(){ return buyers.filter(b=>b.status==="active").length; }
+function buyerName(id){ const b=buyers.find(x=>x.id===id); return b?b.company:"—"; }
+function winLabel(){ return {today:"today",last_7d:"7d",last_30d:"30d",this_month:"MTD",maximum:"all"}[state.win]||state.win; }
 
 /* ============ rendering ============ */
 function renderStatusPills(){
   const map={ok:["ok","live"],off:["off","offline"],warn:["warn","check"]};
   const pill=(n,st)=>`<span class="status"><span class="dot ${map[st][0]}"></span>${n} <span class="muted">${map[st][1]}</span></span>`;
-  $("#statusPills").innerHTML = pill("Meta",state.conn.meta)+pill("HubSpot",state.conn.hubspot)+
+  $("#statusPills").innerHTML = pill("Meta",state.conn.meta)+pill("HubSpot",state.conn.hubspot)+pill("Supabase",state.conn.supabase)+
     `<span class="status"><span class="dot off"></span>Stripe <span class="muted">v2</span></span>`;
 }
 function renderChannelPanel(){
   const rows=[
     ["Meta Marketing API",state.conn.meta,`${state.ads.length} creatives · ${state.adsets.length} ad sets`],
     ["HubSpot CRM",state.conn.hubspot,`${state.leadsTotal} contacts`],
-    ["Stripe",( "off"),"Connect in full app for invoicing"],
-    ["Supabase store",("off"),"Buyers/batches tracked locally for now"]
+    ["Supabase store",state.conn.supabase,`${buyers.length} buyers · ${batches.length} batches · ${invoices.length} invoices`],
+    ["Stripe","off","Connect in full app for invoicing"]
   ];
   $("#channelPanel").innerHTML = rows.map(([n,st,meta])=>{
     const d=st==="ok"?"ok":st==="warn"?"warn":"off";
@@ -486,16 +489,12 @@ function renderKpis(){
   ];
   $("#kpiStrip").innerHTML=cards.map(c=>`<div class="kpi ${c.cls||""}"><div class="label">${esc(c.label)}</div><div class="val">${esc(c.val)}</div><div class="meta">${esc(c.meta)}</div></div>`).join("");
 }
-function winLabel(){ return {today:"today",last_7d:"7d",last_30d:"30d",this_month:"MTD",maximum:"all"}[state.win]||state.win; }
-
 let actChart,segChart;
 function renderCharts(){
-  // leads per day (14d) + spend reference
   const days=[],labels=[];
   for(let i=13;i>=0;i--){ const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d);labels.push(d.toLocaleDateString(undefined,{month:"short",day:"numeric"})); }
   const leadCounts=days.map(d=>{ const n=new Date(d);n.setDate(n.getDate()+1); return state.leads.filter(l=>{const t=new Date(l.created);return t>=d&&t<n;}).length; });
-  const css=getComputedStyle(document.documentElement);
-  const cv=n=>css.getPropertyValue(n).trim();
+  const css=getComputedStyle(document.documentElement); const cv=n=>css.getPropertyValue(n).trim();
   const ink2=cv("--ink2"), line=cv("--line"), violet=cv("--violet"), brand=cv("--brand");
   if(actChart)actChart.destroy();
   actChart=new Chart($("#actChart"),{type:"bar",
@@ -503,7 +502,6 @@ function renderCharts(){
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
       scales:{x:{grid:{display:false},ticks:{color:ink2,maxRotation:0,autoSkip:true}},y:{beginAtZero:true,grid:{color:line},ticks:{color:ink2,precision:0}}}}});
   $("#actSub").textContent="last 14 days · "+cad(totalSpend())+" spend ("+winLabel()+")";
-  // spend by segment
   const segs=Object.entries(state.spendBySeg).filter(([k,v])=>v.spend>0).sort((a,b)=>b[1].spend-a[1].spend);
   if(segChart)segChart.destroy();
   segChart=new Chart($("#segChart"),{type:"bar",
@@ -513,23 +511,20 @@ function renderCharts(){
   $("#segSub").textContent=segs.length?segs.length+" segments":"no spend yet";
 }
 function renderFeed(){
-  const filter=$("#feedFilter").value;
-  const items=[];
+  const filter=$("#feedFilter").value; const items=[];
   state.leads.slice(0,30).forEach(l=>items.push({ts:l.created,type:"lead",text:`New lead — <b>${esc(l.name)}</b>${l.segment!=="—"?" · "+esc(l.segment):""}${l.city?" · "+esc(l.city):""}`}));
   events.forEach(e=>items.push(e));
-  const ico={lead:"lead",money:"money",ad:"ad",batch:"batch"};
-  const txt={lead:"●",money:"$",ad:"◆",batch:"▣"};
+  const ico={lead:"lead",money:"money",ad:"ad",batch:"batch"}; const txt={lead:"●",money:"$",ad:"◆",batch:"▣"};
   const shown=items.filter(i=>filter==="all"||i.type===filter).sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,40);
   $("#feed").innerHTML=shown.length?shown.map(i=>`<div class="fitem"><div class="fico ${ico[i.type]||"batch"}">${txt[i.type]||"•"}</div>
     <div style="flex:1"><div class="ftxt">${i.text}</div><div class="ftime">${timeAgo(i.ts)}</div></div></div>`).join("")
     :`<div class="empty"><div class="big">Nothing yet</div>New leads and actions show up here live.</div>`;
 }
-
-/* ---- leads tab ---- */
 function leadRouting(l){
-  const o=overrides[l.id];
-  if(o&&o.batched){ const b=batches.find(x=>x.id===o.batch_id); return {label:b?("In "+b.name):"Batched",cls:"sent"}; }
-  return {label:"Un-batched",cls:""};
+  const st=routed[l.id];
+  if(st&&["batched","sent","sold"].includes(st)) return {label:st,cls:"sent",locked:true};
+  if(st==="refunded") return {label:"refunded",cls:"paused",locked:false};
+  return {label:"Un-batched",cls:"",locked:false};
 }
 function renderLeads(){
   const q=($("#leadSearch").value||"").toLowerCase();
@@ -538,18 +533,17 @@ function renderLeads(){
     if(q&&!(`${l.name} ${l.email} ${l.city} ${l.province}`.toLowerCase().includes(q)))return false;
     if(gf&&l.segment!==gf)return false;
     if(sf){ const s=isQualified(l)?"qualified":"new"; if(s!==sf)return false; }
-    if(ub&&overrides[l.id]&&overrides[l.id].batched)return false;
+    if(ub&&leadRouting(l).locked)return false;
     return true;
   });
   $("#leadCount").textContent=`${rows.length} shown · ${state.leadsTotal} total in HubSpot`;
-  // filters populate
   const segOpts=[...new Set(state.leads.map(l=>l.segment).filter(s=>s&&s!=="—"))];
   $("#leadSegFilter").innerHTML=`<option value="">All segments</option>`+segOpts.map(s=>`<option ${gf===s?"selected":""}>${esc(s)}</option>`).join("");
   if($("#leadStatusFilter").options.length<=1)$("#leadStatusFilter").innerHTML=`<option value="">All statuses</option><option value="new">New</option><option value="qualified">Qualified</option>`;
   $("#leadsBody").innerHTML=rows.length?rows.map(l=>{
     const r=leadRouting(l), qual=isQualified(l);
     return `<tr>
-      <td class="checkcol"><input type="checkbox" class="leadck" data-id="${l.id}" ${r.cls==="sent"?"disabled":""}></td>
+      <td class="checkcol"><input type="checkbox" class="leadck" data-id="${l.id}" ${r.locked?"disabled":""}></td>
       <td>${l.created?new Date(l.created).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"—"}<div class="ftime">${l.created?timeAgo(l.created):""}</div></td>
       <td><b>${esc(l.name)}</b></td>
       <td>${esc(l.email)||"<span class=muted>—</span>"}<div class="ftime">${esc(l.phone)}</div></td>
@@ -560,10 +554,8 @@ function renderLeads(){
       <td><span class="tag ${r.cls}">${esc(r.label)}</span></td>
     </tr>`;
   }).join("")
-    :`<tr><td colspan="9"><div class="empty"><div class="big">No leads match</div>${state.leadsTotal<=1?"Your funnel is pre-launch — leads will stream in here the moment the quiz fires a HubSpot contact.":"Adjust filters to see more."}</div></td></tr>`;
+    :`<tr><td colspan="9"><div class="empty"><div class="big">No leads match</div>${state.leadsTotal<=1?"Your funnel is pre-launch — leads stream in here the moment the quiz fires a HubSpot contact.":"Adjust filters to see more."}</div></td></tr>`;
 }
-
-/* ---- buyers ---- */
 function renderBuyers(){
   $("#buyersBody").innerHTML=buyers.length?buyers.map(b=>`<tr>
     <td><b>${esc(b.company)}</b></td>
@@ -571,19 +563,17 @@ function renderBuyers(){
     <td>${(b.segments_wanted||[]).map(s=>`<span class="tag seg">${esc(s)}</span>`).join(" ")||"<span class=muted>any</span>"}</td>
     <td>${(b.provinces_wanted||[]).join(", ")||"<span class=muted>any</span>"}</td>
     <td>${cad(b.price_per_lead)}</td>
-    <td><span class="tag ${b.status==="active"?"active":b.status==="paused"?"paused":"new"}">${esc(b.status)}</span></td>
+    <td><span class="tag ${b.status==="active"?"active":"paused"}">${esc(b.status)}</span>
+      <div class="ftime">${b.agreement_consent?'<span style="color:var(--green)">CASL ✓</span>':'<span style="color:var(--amber)">no agreement</span>'}</div></td>
     <td><div class="row-actions">
-      ${b.status!=="active"?`<button class="btn sm good" data-buyer-approve="${b.id}">Approve</button>`:`<button class="btn sm" data-buyer-pause="${b.id}">Pause</button>`}
+      ${b.status==="active"?`<button class="btn sm" data-buyer-pause="${b.id}">Pause</button>`:`<button class="btn sm good" data-buyer-activate="${b.id}">Activate</button>`}
       <button class="btn sm" data-buyer-edit="${b.id}">Edit</button>
       <button class="btn sm danger" data-buyer-del="${b.id}">✕</button>
     </div></td></tr>`).join("")
     :`<tr><td colspan="7"><div class="empty"><div class="big">No buyers yet</div>Add your first buyer to start routing batches.</div></td></tr>`;
 }
-
-/* ---- ads ---- */
 function renderAds(){
   $("#adsWin").textContent="window: "+winLabel();
-  // adsets
   $("#adsetBody").innerHTML=state.adsets.length?state.adsets.map(s=>`<tr>
     <td><b>${esc(s.name)}</b></td><td class="muted">${esc(s.acct)}</td>
     <td><span class="tag ${s.status==="ACTIVE"?"active":"paused"}">${esc(s.status||"—")}</span></td>
@@ -594,7 +584,6 @@ function renderAds(){
       ${s.status==="ACTIVE"?`<button class="btn sm danger" data-killset="${s.id}" data-acct="${s.acctId}">Kill</button>`:`<button class="btn sm good" data-resumeset="${s.id}" data-acct="${s.acctId}">Resume</button>`}
     </div></td></tr>`).join("")
     :`<tr><td colspan="6"><div class="empty">${state.conn.meta==="ok"?"No ad sets in this window.":"Meta not connected in this view."}</div></td></tr>`;
-  // creatives
   const ads=[...state.ads].sort((a,b)=>b.spend-a.spend);
   $("#adsBody").innerHTML=ads.length?ads.map(a=>{
     let dec="—",dcls="";
@@ -616,47 +605,41 @@ function renderAds(){
   }).join("")
     :`<tr><td colspan="10"><div class="empty">${state.conn.meta==="ok"?"No creatives with data in this window.":"Meta not connected in this view."}</div></td></tr>`;
 }
-
-/* ---- batches + money ---- */
-function buyerName(id){ const b=buyers.find(x=>x.id===id); return b?b.company:"—"; }
 function renderBatches(){
-  $("#batchBody").innerHTML=batches.length?batches.slice().reverse().map(b=>`<tr>
+  $("#batchBody").innerHTML=batches.length?batches.map(b=>{
+    const unit=b.lead_count>0?b.total_price/b.lead_count:0;
+    return `<tr>
     <td><b>${esc(b.name)}</b><div class="ftime">${timeAgo(b.created_at)}</div></td>
-    <td>${esc(buyerName(b.buyer_id))}</td>
+    <td>${esc(b.buyer_company)}</td>
     <td>${b.segment_filter?`<span class="tag seg">${esc(b.segment_filter)}</span>`:"<span class=muted>mixed</span>"}</td>
     <td>${b.lead_count}</td>
-    <td>${b.exclusivity==="exclusive"?'<span class="tag">exclusive</span>':'<span class="tag">shared</span>'}</td>
-    <td>${cad(b.total_price)}<div class="ftime">${cad(b.unit_price)}/lead</div></td>
+    <td><span class="tag">${esc(b.exclusivity)}</span></td>
+    <td>${cad(b.total_price)}<div class="ftime">${cad(unit)}/lead</div></td>
     <td><span class="tag ${b.status==="paid"?"paid":b.status==="draft"?"new":"sent"}">${esc(b.status)}</span></td>
     <td><div class="row-actions">
-      ${b.status==="draft"?`<button class="btn sm primary" data-send="${b.id}">Send (API push)</button>`:""}
-      ${(b.status==="sent")?`<button class="btn sm" data-invoice="${b.id}">Generate invoice</button>`:""}
-      <button class="btn sm" data-payload="${b.id}">Payload</button>
-    </div></td></tr>`).join("")
-    :`<tr><td colspan="8"><div class="empty"><div class="big">No batches yet</div>Select leads in the inbox above and click “Create batch”.</div></td></tr>`;
+      ${b.status==="draft"?`<button class="btn sm primary" data-send="${b.id}">Export CSV + send</button>`:""}
+      ${b.status==="sent"?`<button class="btn sm" data-invoice="${b.id}">Generate invoice</button>`:""}
+      ${b.lead_count>0?`<button class="btn sm" data-csv="${b.id}">CSV</button>`:""}
+    </div></td></tr>`;
+  }).join("")
+    :`<tr><td colspan="8"><div class="empty"><div class="big">No batches yet</div>Select leads in the inbox above and click "Create batch".</div></td></tr>`;
 }
 function renderMoney(){
-  // pnl by segment
-  const segs=new Set([...Object.keys(state.spendBySeg),...Object.keys(state.leadsBySeg)]);
-  const revBySeg={};
-  invoices.filter(i=>i.status==="paid").forEach(i=>{ const b=batches.find(x=>x.id===i.batch_id); const s=b&&b.segment_filter?b.segment_filter:"(mixed)"; revBySeg[s]=(revBySeg[s]||0)+i.amount; });
-  Object.keys(revBySeg).forEach(s=>segs.add(s));
+  const segs=new Set([...Object.keys(state.spendBySeg),...Object.keys(revSeg)]);
   let tS=0,tL=0,tR=0;
   const rows=[...segs].filter(s=>s&&s!=="—").map(s=>{
     const sp=(state.spendBySeg[s]&&state.spendBySeg[s].spend)||0;
     const ld=(state.spendBySeg[s]&&state.spendBySeg[s].leads)||0;
-    const rev=revBySeg[s]||0; tS+=sp;tL+=ld;tR+=rev;
+    const rev=revSeg[s]||0; tS+=sp;tL+=ld;tR+=rev;
     return `<tr><td><span class="tag seg">${esc(s)}</span></td><td>${cad(sp)}</td><td>${ld}</td>
       <td>${ld>0?cad(sp/ld):"<span class=muted>—</span>"}</td><td>${cad(rev)}</td>
-      <td class="${rev-sp>=0?"":""}" style="color:${rev-sp>=0?"var(--green)":"var(--red)"}">${cad(rev-sp)}</td></tr>`;
+      <td style="color:${rev-sp>=0?"var(--green)":"var(--red)"}">${cad(rev-sp)}</td></tr>`;
   });
   $("#pnlBody").innerHTML=rows.length?rows.join(""):`<tr><td colspan="6"><div class="empty">No segment spend or revenue yet in this window.</div></td></tr>`;
   $("#pnlFoot").innerHTML=`<tr><th>Total</th><th>${cad(tS)}</th><th>${tL}</th><th>${tL>0?cad(tS/tL):"—"}</th><th>${cad(tR)}</th><th style="color:${tR-tS>=0?"var(--green)":"var(--red)"}">${cad(tR-tS)}</th></tr>`;
-  // invoices
-  $("#invBody").innerHTML=invoices.length?invoices.slice().reverse().map(i=>`<tr>
-    <td><b>${esc(i.number)}</b><div class="ftime">${timeAgo(i.created_at)}</div></td>
-    <td>${esc(buyerName(i.buyer_id))}</td>
-    <td>${esc((batches.find(b=>b.id===i.batch_id)||{}).name||"—")}</td>
+  $("#invBody").innerHTML=invoices.length?invoices.map(i=>`<tr>
+    <td><b>INV-${esc(String(i.id).slice(0,8))}</b><div class="ftime">${timeAgo(i.created_at)}</div></td>
+    <td>${esc(i.buyer_company)}</td><td>${esc(i.batch_name)}</td>
     <td>${cad(i.amount)}</td>
     <td><span class="tag ${i.status==="paid"?"paid":i.status==="void"?"paused":"sent"}">${esc(i.status)}</span></td>
     <td><div class="row-actions">
@@ -665,7 +648,6 @@ function renderMoney(){
     </div></td></tr>`).join("")
     :`<tr><td colspan="6"><div class="empty"><div class="big">No invoices yet</div>Generate one from a sent batch.</div></td></tr>`;
 }
-
 function renderAll(){ renderStatusPills();renderChannelPanel();renderKpis();renderCharts();renderFeed();
   renderLeads();renderBuyers();renderAds();renderBatches();renderMoney(); }
 
@@ -673,23 +655,19 @@ function renderAll(){ renderStatusPills();renderChannelPanel();renderKpis();rend
 async function metaUpdate(acct,id,type,fields,desc){
   try{
     await callTool(META+"__ads_update_entity",{ad_account_id:acct,entity_id:id,entity_type:type,fields:JSON.stringify(fields)});
-    toast(desc+" ✓"); logEvent("ad",desc);
-    await loadAds(); renderAll();
+    toast(desc+" ✓"); logEvent("ad",desc); await loadAds(); renderAll();
   }catch(e){ toast("Failed: "+(e.message||e)); }
 }
 function bindAdActions(){
   $("#adsBody").onclick=e=>{
     const k=e.target.closest("[data-killad]"),r=e.target.closest("[data-resumead]");
-    if(k){ if(confirm("Pause this ad in Meta? It stops delivering immediately."))
-      metaUpdate(k.dataset.acct,k.dataset.killad,"ad",{status:"PAUSED"},"Killed creative"); }
+    if(k){ if(confirm("Pause this ad in Meta? It stops delivering immediately.")) metaUpdate(k.dataset.acct,k.dataset.killad,"ad",{status:"PAUSED"},"Killed creative"); }
     if(r){ metaUpdate(r.dataset.acct,r.dataset.resumead,"ad",{status:"ACTIVE"},"Resumed creative"); }
   };
   $("#adsetBody").onclick=e=>{
     const sc=e.target.closest("[data-scale]"),k=e.target.closest("[data-killset]"),r=e.target.closest("[data-resumeset]");
-    if(sc){ const cur=parseFloat(sc.dataset.bud)||0; const next=Math.max(1.41,cur*(1+settings.scale_step));
-      const cents=Math.round(next*100);
-      if(confirm(`Scale daily budget ${cad(cur)} → ${cad(next)} (+${Math.round(settings.scale_step*100)}%)?`))
-        metaUpdate(sc.dataset.acct,sc.dataset.scale,"ad_set",{daily_budget:cents},`Scaled budget to ${cad(next)}`); }
+    if(sc){ const cur=parseFloat(sc.dataset.bud)||0; const next=Math.max(1.41,cur*(1+settings.scale_step)); const cents=Math.round(next*100);
+      if(confirm(`Scale daily budget ${cad(cur)} → ${cad(next)} (+${Math.round(settings.scale_step*100)}%)?`)) metaUpdate(sc.dataset.acct,sc.dataset.scale,"ad_set",{daily_budget:cents},`Scaled budget to ${cad(next)}`); }
     if(k){ if(confirm("Pause this ad set in Meta?")) metaUpdate(k.dataset.acct,k.dataset.killset,"ad_set",{status:"PAUSED"},"Killed ad set"); }
     if(r){ metaUpdate(r.dataset.acct,r.dataset.resumeset,"ad_set",{status:"ACTIVE"},"Resumed ad set"); }
   };
@@ -698,6 +676,7 @@ function bindAdActions(){
 /* ============ modals ============ */
 function openModal(title,bodyHtml,footHtml){ $("#modalTitle").textContent=title;$("#modalBody").innerHTML=bodyHtml;$("#modalFoot").innerHTML=footHtml||"";$("#modalBg").classList.add("show"); }
 function closeModal(){ $("#modalBg").classList.remove("show"); }
+window.closeModalProxy=closeModal;
 $("#modalX").onclick=closeModal; $("#modalBg").onclick=e=>{if(e.target===$("#modalBg"))closeModal();};
 
 function buyerForm(b){
@@ -712,143 +691,186 @@ function buyerForm(b){
     <div style="display:flex;gap:10px"><div class="field" style="flex:1"><label>Provinces (comma-sep)</label><input id="bf_prov" value="${esc((b.provinces_wanted||[]).join(", "))}" placeholder="BC, AB"></div>
       <div class="field" style="width:130px"><label>$ / lead</label><input id="bf_price" type="number" value="${b.price_per_lead!=null?b.price_per_lead:settings.default_price_per_lead}"></div></div>
     <div class="field"><label>Notes</label><textarea id="bf_notes">${esc(b.notes||"")}</textarea></div>
+    <label class="status" style="cursor:pointer;width:100%;justify-content:flex-start"><input type="checkbox" id="bf_agree" ${b.agreement_consent?"checked":""}> Buyer agreed (out of band) to honor CASL / consent terms${b.agreement_timestamp?` <span class="muted">· since ${new Date(b.agreement_timestamp).toLocaleDateString()}</span>`:""}</label>
   `,`<button class="btn ghost" onclick="closeModalProxy()">Cancel</button><button class="btn primary" id="bf_save">Save buyer</button>`);
   $("#bf_segs").onclick=e=>{const c=e.target.closest("[data-seg]");if(c)c.classList.toggle("on");};
-  $("#bf_save").onclick=()=>{
+  $("#bf_save").onclick=async()=>{
     const company=$("#bf_company").value.trim(); if(!company){toast("Company is required");return;}
-    const segsSel=[...$("#bf_segs").querySelectorAll(".on")].map(x=>x.dataset.seg);
-    const rec={id:b.id||uid(),company,contact_name:$("#bf_contact").value.trim(),email:$("#bf_email").value.trim(),
-      phone:$("#bf_phone").value.trim(),segments_wanted:segsSel,
+    const payload={company,contact_name:$("#bf_contact").value.trim(),email:$("#bf_email").value.trim(),
+      phone:$("#bf_phone").value.trim(),
+      segments_wanted:[...$("#bf_segs").querySelectorAll(".on")].map(x=>x.dataset.seg),
       provinces_wanted:$("#bf_prov").value.split(",").map(x=>x.trim()).filter(Boolean),
-      price_per_lead:parseFloat($("#bf_price").value)||0,notes:$("#bf_notes").value.trim(),
-      status:b.status||"pending",created_at:b.created_at||new Date().toISOString()};
-    const i=buyers.findIndex(x=>x.id===rec.id); if(i>=0)buyers[i]=rec; else buyers.push(rec);
-    persist();renderBuyers();renderKpis();closeModal();toast("Buyer saved");
+      price_per_lead:$("#bf_price").value, notes:$("#bf_notes").value.trim(), status:b.status||"active",
+      agreement_consent:$("#bf_agree").checked};
+    if(b.id)payload.id=b.id;
+    $("#bf_save").disabled=true;
+    try{ await supa(`select sw_upsert_buyer(${sqlJson(payload)}) as result`); await loadStore(); renderBuyers();renderKpis();renderChannelPanel(); closeModal(); toast("Buyer saved"); }
+    catch(e){ toast("Save failed: "+(e.message||e)); $("#bf_save").disabled=false; }
   };
 }
-window.closeModalProxy=closeModal;
-
 function batchForm(selIds){
   const sel=state.leads.filter(l=>selIds.includes(l.id));
   if(!sel.length){toast("Select at least one lead");return;}
   const segCounts={}; sel.forEach(l=>{segCounts[l.segment]=(segCounts[l.segment]||0)+1;});
   const segGuess=Object.entries(segCounts).sort((a,b)=>b[1]-a[1])[0][0];
-  const activeBuyers=buyers.filter(b=>b.status==="active");
-  const buyerOpts=activeBuyers.length?activeBuyers.map(b=>{
-    const fit=(b.segments_wanted||[]).includes(segGuess);
-    return `<option value="${b.id}" data-price="${b.price_per_lead}">${esc(b.company)} — ${cad(b.price_per_lead)}/lead${fit?" · ✓ fit":""}</option>`;
-  }).join(""):`<option value="">No active buyers — approve one first</option>`;
+  const act=buyers.filter(b=>b.status==="active");
+  const buyerOpts=act.length?act.map(b=>{const fit=(b.segments_wanted||[]).includes(segGuess);
+    return `<option value="${b.id}" data-price="${b.price_per_lead}">${esc(b.company)} — ${cad(b.price_per_lead)}/lead${fit?" · ✓ fit":""}</option>`;}).join("")
+    :`<option value="">No active buyers — approve one first</option>`;
   openModal("Create batch · "+sel.length+" leads",`
     <div class="field"><label>Batch name</label><input id="ba_name" value="${esc(segGuess!=="—"?segGuess:"Mixed")} · ${sel.length} leads · ${new Date().toLocaleDateString()}"></div>
     <div class="field"><label>Assign buyer</label><select id="ba_buyer">${buyerOpts}</select></div>
     <div style="display:flex;gap:10px">
       <div class="field" style="flex:1"><label>Exclusivity</label><select id="ba_excl"><option value="exclusive" selected>Exclusive (sold once)</option><option value="shared">Shared</option></select></div>
-      <div class="field" style="width:140px"><label>$ / lead</label><input id="ba_price" type="number" value="${activeBuyers[0]?activeBuyers[0].price_per_lead:settings.default_price_per_lead}"></div>
+      <div class="field" style="width:140px"><label>$ / lead</label><input id="ba_price" type="number" value="${act[0]?act[0].price_per_lead:settings.default_price_per_lead}"></div>
     </div>
     <div class="kv"><span>Total: <b id="ba_total"></b></span><span>Segments: <b>${esc(Object.keys(segCounts).join(", "))}</b></span></div>
-    <div class="ftime" style="margin-top:8px">Exclusive leads are locked from future batches on send.</div>
-  `,`<button class="btn ghost" onclick="closeModalProxy()">Cancel</button><button class="btn primary" id="ba_save" ${activeBuyers.length?"":"disabled"}>Create draft batch</button>`);
+    <div class="ftime" style="margin-top:8px">Leads already in a batch are skipped automatically (exclusive single-sale, enforced in Supabase).</div>
+  `,`<button class="btn ghost" onclick="closeModalProxy()">Cancel</button><button class="btn primary" id="ba_save" ${act.length?"":"disabled"}>Create draft batch</button>`);
   const recalc=()=>{$("#ba_total").textContent=cad((parseFloat($("#ba_price").value)||0)*sel.length);};
   $("#ba_buyer").onchange=e=>{const o=e.target.selectedOptions[0];if(o&&o.dataset.price)$("#ba_price").value=o.dataset.price;recalc();};
   $("#ba_price").oninput=recalc; recalc();
-  $("#ba_save").onclick=()=>{
+  $("#ba_save").onclick=async()=>{
     const buyer_id=$("#ba_buyer").value; if(!buyer_id){toast("Pick a buyer");return;}
-    const unit=parseFloat($("#ba_price").value)||0;
-    const batch={id:uid(),name:$("#ba_name").value.trim()||"Batch",buyer_id,
-      segment_filter:Object.keys(segCounts).length===1?segGuess:"",exclusivity:$("#ba_excl").value,
-      lead_ids:sel.map(l=>l.id),lead_snapshots:sel.map(l=>({id:l.id,name:l.name,email:l.email,phone:l.phone,city:l.city,province:l.province,segment:l.segment,source:l.source})),
-      lead_count:sel.length,unit_price:unit,total_price:unit*sel.length,status:"draft",created_at:new Date().toISOString()};
-    batches.push(batch);persist();
-    closeModal();renderBatches();toast("Draft batch created");
-    logEvent("batch","Batch drafted — "+batch.name+" → "+buyerName(buyer_id));
+    const unit=parseFloat($("#ba_price").value)||0; const excl=$("#ba_excl").value;
+    const name=$("#ba_name").value.trim()||"Batch";
+    const seg=Object.keys(segCounts).length===1?segGuess:"";
+    const leadsJson=sel.map(l=>({hubspot_contact_id:l.id,segment:l.segment==="—"?"unknown":l.segment,first_name:l.name,email:l.email,phone:l.phone,city:l.city,province:l.province,source:l.source}));
+    $("#ba_save").disabled=true;
+    try{
+      const res=rpcRow(await supa(`select sw_create_batch(${sqlLit(buyer_id)}::uuid, ${sqlLit(name)}, ${sqlLit(excl)}, ${unit}, ${sqlLit(seg)}, ${sqlJson(leadsJson)}) as result`));
+      await loadStore(); closeModal(); renderBatches();renderLeads();renderChannelPanel();
+      logEvent("batch","Batch drafted — "+name+" → "+buyerName(buyer_id));
+      toast("Draft batch created ("+(res&&res.lead_count!=null?res.lead_count:sel.length)+" leads)");
+    }catch(e){ toast("Batch failed: "+(e.message||e)); $("#ba_save").disabled=false; }
   };
 }
+const CSV_COLS=["lead_id","created_at","segment","first_name","email","phone","city","province","qualified","consent_express","consent_timestamp","consent_ip"];
+function csvCell(v){ if(v==null)return ""; const s=String(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+async function batchCsv(id){
+  const rows=await supa(`select l.id as lead_id, l.created_at, l.segment, l.first_name, l.email, l.phone, l.city, l.province, l.qualified, l.consent_express, l.consent_timestamp, l.consent_ip from batch_leads bl join leads l on l.id=bl.lead_id where bl.batch_id=${sqlLit(id)}::uuid order by l.created_at`);
+  const csv=[CSV_COLS.join(",")].concat(rows.map(r=>CSV_COLS.map(c=>csvCell(r[c])).join(","))).join("\n");
+  return {csv,count:rows.length};
+}
+function csvFilename(b){ const seg=(b&&b.segment_filter)||"mixed"; const d=new Date().toISOString().slice(0,10);
+  return (`stillwater_${seg}_${(b&&b.lead_count)||0}leads_${d}.csv`).replace(/[^a-z0-9._-]+/gi,"-"); }
+function downloadCsv(name,text){ const blob=new Blob([text],{type:"text/csv;charset=utf-8"}); const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500); }
+async function sendBatch(id){
+  try{
+    const b=rpcRow(await supa(`select sw_send_batch(${sqlLit(id)}::uuid) as result`));
+    await loadStore(); renderBatches();renderLeads();renderKpis();
+    const {csv,count}=await batchCsv(id);
+    const bb=batches.find(x=>x.id===id)||b||{}; const fname=csvFilename(bb);
+    logEvent("batch","Batch exported — "+(bb.name||"")+" ("+count+" leads) → "+buyerName(bb.buyer_id));
+    const preview=csv.split("\n").slice(0,12).join("\n")+(count>11?"\n…":"");
+    openModal("Batch exported · send the CSV to the buyer",`
+      <p class="ink2">${count} leads, batch marked <b>sent</b>. Exclusive leads are now locked in Supabase.</p>
+      <p class="ftime">Download the CSV and send it to the buyer (email / Drive / Slack). The three <b>consent_*</b> columns are the CASL proof of opt-in. Then generate the invoice.</p>
+      <code class="payload">${esc(preview)}</code>
+    `,`<button class="btn primary" id="dlCsv">Download CSV</button><button class="btn" id="cpCsv">Copy</button><button class="btn ghost" onclick="closeModalProxy()">Done</button>`);
+    $("#dlCsv").onclick=()=>downloadCsv(fname,csv);
+    $("#cpCsv").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(csv);toast("CSV copied");};
+  }catch(e){ toast("Export failed: "+(e.message||e)); }
+}
+async function exportCsv(id){
+  try{ const {csv,count}=await batchCsv(id); const bb=batches.find(x=>x.id===id)||{};
+    downloadCsv(csvFilename(bb),csv); toast("CSV downloaded ("+count+" leads)");
+  }catch(e){ toast("Export failed: "+(e.message||e)); }
+}
+async function makeInvoice(id){
+  try{ const inv=rpcRow(await supa(`select sw_create_invoice(${sqlLit(id)}::uuid, null) as result`));
+    await loadStore(); renderBatches();renderMoney();renderKpis();renderChannelPanel();
+    toast("Invoice created"); logEvent("money","Invoice created — "+cad(inv&&inv.amount)+" to "+buyerName(inv&&inv.buyer_id));
+  }catch(e){ toast("Invoice failed: "+(e.message||e)); }
+}
 
-function sendBatch(id){
-  const b=batches.find(x=>x.id===id); if(!b)return;
-  // lock exclusive leads
-  if(b.exclusivity==="exclusive") b.lead_ids.forEach(lid=>{overrides[lid]={batched:true,batch_id:b.id};});
-  else b.lead_ids.forEach(lid=>{ if(!overrides[lid])overrides[lid]={batched:true,batch_id:b.id}; });
-  b.status="sent"; b.sent_at=new Date().toISOString(); persist();
-  renderBatches();renderLeads();
-  const payload=batchPayload(b);
-  logEvent("batch","Batch sent — "+b.name+" ("+b.lead_count+" leads → "+buyerName(b.buyer_id)+")");
-  openModal("Batch sent · API push payload",`
-    <p class="ink2">${b.lead_count} leads assigned to <b>${esc(buyerName(b.buyer_id))}</b> (${b.exclusivity}). Exclusive leads are now locked.</p>
-    <p class="ftime">Live POST to the buyer endpoint happens server-side in the full app. For now, copy this payload to push it:</p>
-    <code class="payload" id="pl">${esc(JSON.stringify(payload,null,2))}</code>
-  `,`<button class="btn" id="copyPl">Copy payload</button><button class="btn primary" onclick="closeModalProxy()">Done</button>`);
-  $("#copyPl").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(JSON.stringify(payload,null,2));toast("Payload copied");};
+/* ============ one-time local import ============ */
+function localCounts(){ return {b:(store.get("buyers",[])||[]).length, x:(store.get("batches",[])||[]).length, i:(store.get("invoices",[])||[]).length}; }
+function maybeShowImport(){
+  const c=localCounts(); const el=$("#importBanner");
+  if(store.get("imported",false)||(c.b+c.x+c.i===0)||state.conn.supabase!=="ok"){ el.classList.add("hide"); return; }
+  el.classList.remove("hide");
+  el.innerHTML=`This browser has <b>${c.b} buyers</b>, <b>${c.x} batches</b>, <b>${c.i} invoices</b> saved locally from the previous version.
+    <span style="flex:1"></span>
+    <button class="btn sm primary" id="impGo">Import into Supabase</button>
+    <button class="btn sm ghost" id="impSkip">Dismiss</button>`;
+  $("#impSkip").onclick=()=>{store.set("imported",true);el.classList.add("hide");};
+  $("#impGo").onclick=runImport;
 }
-function batchPayload(b){
-  const buyer=buyers.find(x=>x.id===b.buyer_id)||{};
-  return {batch_id:b.id,batch_name:b.name,buyer:{id:buyer.id,company:buyer.company,email:buyer.email},
-    exclusivity:b.exclusivity,unit_price:b.unit_price,total_price:b.total_price,
-    lead_count:b.lead_count,sent_at:b.sent_at,leads:b.lead_snapshots};
-}
-function showPayload(id){ const b=batches.find(x=>x.id===id); if(!b)return;
-  const payload=batchPayload(b);
-  openModal("Batch payload — "+b.name,`<code class="payload">${esc(JSON.stringify(payload,null,2))}</code>`,
-    `<button class="btn" onclick="navigator.clipboard&&navigator.clipboard.writeText(${JSON.stringify(JSON.stringify(payload))});">Copy</button><button class="btn primary" onclick="closeModalProxy()">Close</button>`);
-}
-function makeInvoice(id){
-  const b=batches.find(x=>x.id===id); if(!b)return;
-  const inv={id:uid(),number:"INV-"+(invoices.length+1001),batch_id:b.id,buyer_id:b.buyer_id,
-    amount:b.total_price,status:"open",created_at:new Date().toISOString()};
-  invoices.push(inv); b.status="invoiced"; persist();
-  renderBatches();renderMoney();renderKpis();toast("Invoice "+inv.number+" created");
-  logEvent("money","Invoice "+inv.number+" created — "+cad(inv.amount)+" to "+buyerName(b.buyer_id));
+async function runImport(){
+  const lb=store.get("buyers",[])||[], lx=store.get("batches",[])||[], li=store.get("invoices",[])||[];
+  $("#importBanner").innerHTML=`<div class="loadingbar" style="flex:1"></div> Importing local data into Supabase…`;
+  const buyerMap={}; // oldId -> newId
+  try{
+    for(const b of lb){
+      const p={company:b.company,contact_name:b.contact_name,email:b.email||"",phone:b.phone,
+        segments_wanted:b.segments_wanted||[],provinces_wanted:b.provinces_wanted||[],price_per_lead:b.price_per_lead,notes:b.notes,status:b.status||"pending"};
+      const nb=rpcRow(await supa(`select sw_upsert_buyer(${sqlJson(p)}) as result`));
+      if(nb&&nb.id&&b.id)buyerMap[b.id]=nb.id;
+    }
+    const batchMap={}; // oldBatchId -> newBatch
+    for(const x of lx){
+      const buyerId=buyerMap[x.buyer_id]; if(!buyerId)continue;
+      const leadsJson=(x.lead_snapshots||[]).map(l=>({hubspot_contact_id:l.id,segment:l.segment==="—"?"unknown":l.segment,first_name:l.name,email:l.email,phone:l.phone,city:l.city,province:l.province,source:l.source}));
+      const nb=rpcRow(await supa(`select sw_create_batch(${sqlLit(buyerId)}::uuid, ${sqlLit(x.name||"Imported batch")}, ${sqlLit(x.exclusivity||"exclusive")}, ${Number(x.unit_price)||0}, ${sqlLit(x.segment_filter||"")}, ${sqlJson(leadsJson)}) as result`));
+      if(nb&&nb.id){ batchMap[x.id]={id:nb.id,status:x.status};
+        if(["sent","invoiced","paid"].includes(x.status)) await supa(`select sw_send_batch(${sqlLit(nb.id)}::uuid) as result`);
+      }
+    }
+    for(const inv of li){
+      const nb=batchMap[inv.batch_id]; if(!nb)continue;
+      const ni=rpcRow(await supa(`select sw_create_invoice(${sqlLit(nb.id)}::uuid, null) as result`));
+      if(ni&&ni.id){ if(inv.status==="paid") await supa(`select sw_mark_invoice_paid(${sqlLit(ni.id)}::uuid) as result`);
+        else if(inv.status==="void") await supa(`select sw_void_invoice(${sqlLit(ni.id)}::uuid) as result`); }
+    }
+    store.set("imported",true);
+    await loadStore(); renderAll();
+    $("#importBanner").classList.add("hide");
+    toast("Imported "+lb.length+" buyers, "+lx.length+" batches, "+li.length+" invoices");
+    logEvent("batch","Imported local data into Supabase");
+  }catch(e){ toast("Import error: "+(e.message||e)); maybeShowImport(); }
 }
 
 /* ============ events binding ============ */
 function bindStatic(){
-  // tabs
   $("#tabs").onclick=e=>{const btn=e.target.closest("button[data-tab]");if(!btn)return;
     $$("#tabs button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");
     $$("section[id^=tab-]").forEach(s=>s.classList.add("hide"));$("#tab-"+btn.dataset.tab).classList.remove("hide");
     if(btn.dataset.tab==="dashboard")setTimeout(renderCharts,30);};
-  // window
   $("#windowSel").value=state.win;
   $("#windowSel").onchange=async e=>{state.win=e.target.value;setBusy(true);await loadAds();setBusy(false);renderAll();};
-  // theme
   applyTheme(store.get("theme","light"));
   $("#themeBtn").onclick=()=>{const t=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";applyTheme(t);store.set("theme",t);renderCharts();};
-  // feed filter
   $("#feedFilter").onchange=renderFeed;
-  // leads filters
   ["#leadSearch","#leadStatusFilter","#leadSegFilter"].forEach(s=>{$(s).oninput=renderLeads;$(s).onchange=renderLeads;});
   $("#unbatchedOnly").onchange=renderLeads;
   $("#leadAll").onchange=e=>{$$(".leadck:not(:disabled)").forEach(c=>c.checked=e.target.checked);};
   $("#makeBatchBtn").onclick=()=>{const ids=$$(".leadck:checked").map(c=>c.dataset.id);batchForm(ids);};
-  // batches body
-  $("#batchBody").onclick=e=>{const s=e.target.closest("[data-send]"),i=e.target.closest("[data-invoice]"),p=e.target.closest("[data-payload]");
-    if(s)sendBatch(s.dataset.send); if(i)makeInvoice(i.dataset.invoice); if(p)showPayload(p.dataset.payload);};
-  // buyers
+  $("#batchBody").onclick=e=>{const s=e.target.closest("[data-send]"),i=e.target.closest("[data-invoice]"),c=e.target.closest("[data-csv]");
+    if(s)sendBatch(s.dataset.send); if(i)makeInvoice(i.dataset.invoice); if(c)exportCsv(c.dataset.csv);};
   $("#addBuyerBtn").onclick=()=>buyerForm(null);
-  $("#buyersBody").onclick=e=>{
-    const ap=e.target.closest("[data-buyer-approve]"),pa=e.target.closest("[data-buyer-pause]"),ed=e.target.closest("[data-buyer-edit]"),de=e.target.closest("[data-buyer-del]");
-    if(ap){buyers.find(b=>b.id===ap.dataset.buyerApprove).status="active";persist();renderBuyers();renderKpis();toast("Buyer approved");}
-    if(pa){buyers.find(b=>b.id===pa.dataset.buyerPause).status="paused";persist();renderBuyers();renderKpis();toast("Buyer paused");}
-    if(ed){buyerForm(buyers.find(b=>b.id===ed.dataset.buyerEdit));}
-    if(de){if(confirm("Delete buyer?")){buyers=buyers.filter(b=>b.id!==de.dataset.buyerDel);persist();renderBuyers();renderKpis();}}
+  $("#buyersBody").onclick=async e=>{
+    const ac=e.target.closest("[data-buyer-activate]"),pa=e.target.closest("[data-buyer-pause]"),ed=e.target.closest("[data-buyer-edit]"),de=e.target.closest("[data-buyer-del]");
+    try{
+      if(ac){await supa(`select sw_set_buyer_status(${sqlLit(ac.dataset.buyerActivate)}::uuid,'active') as result`);await loadStore();renderBuyers();renderKpis();toast("Buyer activated");}
+      if(pa){await supa(`select sw_set_buyer_status(${sqlLit(pa.dataset.buyerPause)}::uuid,'paused') as result`);await loadStore();renderBuyers();renderKpis();toast("Buyer paused");}
+      if(ed){buyerForm(buyers.find(b=>b.id===ed.dataset.buyerEdit));}
+      if(de){if(confirm("Delete buyer?")){await supa(`delete from buyers where id=${sqlLit(de.dataset.buyerDel)}::uuid`);await loadStore();renderBuyers();renderKpis();renderChannelPanel();toast("Buyer deleted");}}
+    }catch(err){ toast("Failed: "+(err.message||err)); }
   };
-  // money
-  $("#invBody").onclick=e=>{const p=e.target.closest("[data-pay]"),v=e.target.closest("[data-void]");
-    if(p){const inv=invoices.find(x=>x.id===p.dataset.pay);inv.status="paid";inv.paid_at=new Date().toISOString();
-      const b=batches.find(x=>x.id===inv.batch_id);if(b)b.status="paid";persist();renderMoney();renderKpis();renderBatches();
-      logEvent("money","Invoice "+inv.number+" paid — "+cad(inv.amount));toast("Marked paid");}
-    if(v){const inv=invoices.find(x=>x.id===v.dataset.void);if(confirm("Void / refund this invoice?")){inv.status="void";
-      // free up leads
-      const b=batches.find(x=>x.id===inv.batch_id);if(b)b.lead_ids.forEach(lid=>{delete overrides[lid];});
-      persist();renderMoney();renderKpis();renderLeads();logEvent("money","Invoice "+inv.number+" voided / refunded");toast("Voided");}}
+  $("#invBody").onclick=async e=>{const p=e.target.closest("[data-pay]"),v=e.target.closest("[data-void]");
+    try{
+      if(p){const inv=rpcRow(await supa(`select sw_mark_invoice_paid(${sqlLit(p.dataset.pay)}::uuid) as result`));await loadStore();renderMoney();renderKpis();renderBatches();renderChannelPanel();logEvent("money","Invoice paid — "+cad(inv&&inv.amount));toast("Marked paid");}
+      if(v){if(confirm("Void / refund this invoice? Its leads are released for resale.")){await supa(`select sw_void_invoice(${sqlLit(v.dataset.void)}::uuid) as result`);await loadStore();renderMoney();renderKpis();renderLeads();renderBatches();logEvent("money","Invoice voided / refunded");toast("Voided");}}
+    }catch(err){ toast("Failed: "+(err.message||err)); }
   };
-  // ads
   $("#refreshAdsBtn").onclick=async()=>{setBusy(true);await loadAds();setBusy(false);renderAll();toast("Ads refreshed");};
   $("#newBatchSkillBtn").onclick=()=>{if(window.sendPrompt)sendPrompt("Run the GetInsuredBC ad batch skill to generate a new PAUSED campaign of creatives for review.");else toast("Open in chat to trigger the skill");};
   bindAdActions();
 }
 function setBusy(b){ let el=$("#ctxBanner");
-  if(b){el.classList.remove("hide");el.innerHTML='<div class="loadingbar"></div>Loading live data from Meta &amp; HubSpot…';}
+  if(b){el.classList.remove("hide");el.innerHTML='<div class="loadingbar" style="flex:1"></div>Loading live data from Meta, HubSpot &amp; Supabase…';}
   else if(el.dataset.sticky!=="1"){el.classList.add("hide");} }
 function applyTheme(t){ document.documentElement.setAttribute("data-theme",t); }
 
@@ -857,12 +879,15 @@ async function boot(){
   bindStatic(); renderAll();
   if(!window.cowork||!window.cowork.callMcpTool){
     const el=$("#ctxBanner");el.dataset.sticky="1";el.classList.remove("hide");
-    el.textContent="Open this view inside Cowork to load live Meta & HubSpot data. Buyers, batches and invoices still work offline.";
+    el.textContent="Open this view inside Cowork to load live data (HubSpot, Meta, Supabase).";
     return;
   }
   setBusy(true);
-  await Promise.allSettled([loadLeads(),loadAds()]);
-  setBusy(false); state.loaded=true; renderAll();
+  const r=await Promise.allSettled([loadLeads(),loadAds(),loadStore()]);
+  setBusy(false); state.loaded=true; renderAll(); maybeShowImport();
+  const failed=r.filter(x=>x.status==="rejected");
+  if(state.conn.supabase!=="ok"){ const el=$("#ctxBanner");el.dataset.sticky="1";el.classList.remove("hide");
+    el.innerHTML="Supabase store unreachable — buyers/batches/invoices won't load. Meta &amp; HubSpot still live."; }
 }
 boot();
 </script>
