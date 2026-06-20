@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stillwater Command Center</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f4f6fb; --bg2:#eef1f8; --panel:#ffffff; --panel2:#f8fafc;
+    --ink:#0f1729; --ink2:#475069; --muted:#7a8499; --line:#e6e9f2;
+    --brand:#0e7490; --brand2:#0891b2; --accent:#2563eb;
+    --green:#0f9d6b; --greenbg:#e7f7ef; --red:#d6455b; --redbg:#fdeaed;
+    --amber:#b7791f; --amberbg:#fbf3e2; --violet:#6d4aff; --violetbg:#efeaff;
+    --shadow:0 1px 2px rgba(16,23,41,.05),0 8px 24px rgba(16,23,41,.06);
+    --radius:16px;
+  }
+  html[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#0b1020; --bg2:#0e1426; --panel:#141b2e; --panel2:#1a2236;
+    --ink:#eef2fb; --ink2:#aab4cc; --muted:#7c89a6; --line:#26304a;
+    --brand:#22d3ee; --brand2:#38bdf8; --accent:#60a5fa;
+    --green:#34d399; --greenbg:#0f2e25; --red:#fb7185; --redbg:#3a1320;
+    --amber:#fbbf24; --amberbg:#332611; --violet:#a78bfa; --violetbg:#241a4d;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  a{color:var(--accent);text-decoration:none}
+  .wrap{max-width:1240px;margin:0 auto;padding:18px 20px 60px;}
+  /* top bar */
+  .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:.2px}
+  .brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+  .sub{color:var(--muted);font-weight:500;font-size:12px}
+  .spacer{flex:1}
+  .pillrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .status{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:5px 10px;font-size:12px;color:var(--ink2);box-shadow:var(--shadow)}
+  .dot{width:8px;height:8px;border-radius:50%}
+  .dot.ok{background:var(--green)} .dot.off{background:var(--muted)} .dot.warn{background:var(--amber)}
+  select,button,input,textarea{font-family:inherit;font-size:13px;color:var(--ink)}
+  .ctrl{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 10px;box-shadow:var(--shadow)}
+  .btn{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 12px;cursor:pointer;box-shadow:var(--shadow);font-weight:600}
+  .btn:hover{border-color:var(--brand)}
+  .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:none}
+  .btn.ghost{background:transparent;box-shadow:none}
+  .btn.sm{padding:4px 9px;font-size:12px;border-radius:8px}
+  .btn.danger{color:var(--red);border-color:var(--redbg)}
+  .btn.danger:hover{background:var(--redbg);border-color:var(--red)}
+  .btn.good{color:var(--green);border-color:var(--greenbg)}
+  .btn.good:hover{background:var(--greenbg);border-color:var(--green)}
+  /* nav */
+  nav.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:5px;box-shadow:var(--shadow);margin-bottom:18px;overflow:auto}
+  nav.tabs button{flex:0 0 auto;background:transparent;border:none;padding:9px 16px;border-radius:10px;
+    cursor:pointer;color:var(--ink2);font-weight:600}
+  nav.tabs button.active{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
+  /* kpi */
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
+  @media(max-width:1080px){.kpis{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:560px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::after{content:"";position:absolute;inset:0 0 auto auto;width:90px;height:90px;border-radius:50%;
+    background:radial-gradient(circle at 70% 30%,rgba(8,145,178,.10),transparent 70%);pointer-events:none}
+  .kpi .label{color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .kpi .val{font-size:24px;font-weight:760;margin-top:6px}
+  .kpi .meta{font-size:12px;color:var(--ink2);margin-top:3px}
+  .kpi.good .val{color:var(--green)} .kpi.red .val{color:var(--red)}
+  /* panels / grid */
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1.55fr 1fr}
+  @media(max-width:980px){.g2{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .panel .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .panel .hd h3{margin:0;font-size:14px}
+  .panel .bd{padding:14px 16px}
+  .chartbox{position:relative;height:240px}
+  /* feed */
+  .feed{max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+  .fitem{display:flex;gap:10px;align-items:flex-start;padding:9px 6px;border-bottom:1px solid var(--line)}
+  .fitem:last-child{border-bottom:none}
+  .fico{width:26px;height:26px;border-radius:8px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .fico.lead{background:var(--violetbg);color:var(--violet)} .fico.money{background:var(--greenbg);color:var(--green)}
+  .fico.ad{background:var(--amberbg);color:var(--amber)} .fico.batch{background:var(--panel2);color:var(--ink2)}
+  .ftxt{font-size:13px} .ftime{font-size:11px;color:var(--muted)}
+  /* table */
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;position:sticky;top:0;background:var(--panel)}
+  tr:hover td{background:var(--panel2)}
+  .tablewrap{overflow:auto;max-height:540px}
+  .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid var(--line);background:var(--panel2);color:var(--ink2)}
+  .tag.seg{background:var(--violetbg);color:var(--violet);border-color:transparent}
+  .tag.active{background:var(--greenbg);color:var(--green);border-color:transparent}
+  .tag.paused{background:var(--redbg);color:var(--red);border-color:transparent}
+  .tag.new{background:var(--violetbg);color:var(--violet);border-color:transparent}
+  .tag.sent{background:var(--amberbg);color:var(--amber);border-color:transparent}
+  .tag.paid{background:var(--greenbg);color:var(--green);border-color:transparent}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap}
+  .muted{color:var(--muted)} .ink2{color:var(--ink2)}
+  .empty{padding:34px 16px;text-align:center;color:var(--muted)}
+  .empty .big{font-size:15px;color:var(--ink2);font-weight:600;margin-bottom:4px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .toolbar input[type=text]{min-width:160px}
+  .hide{display:none!important}
+  .sectiontitle{font-size:18px;font-weight:720;margin:2px 0 14px}
+  .checkcol{width:34px}
+  /* modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(8,12,24,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);width:min(560px,100%);max-height:88vh;overflow:auto}
+  .modal .hd{display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .modal .hd h3{margin:0;font-size:15px} .modal .bd{padding:18px}
+  .field{margin-bottom:12px} .field label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+  .field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+  .field textarea{min-height:64px;resize:vertical}
+  .seglist{display:flex;flex-wrap:wrap;gap:6px}
+  .segchk{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:12px;cursor:pointer;background:var(--panel2)}
+  .segchk.on{background:var(--violetbg);color:var(--violet);border-color:transparent}
+  .modal .ft{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--line)}
+  .banner{background:var(--amberbg);color:var(--amber);border:1px solid transparent;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:600}
+  .kv{display:flex;gap:8px;font-size:12px;color:var(--ink2);flex-wrap:wrap}
+  .kv b{color:var(--ink)}
+  code.payload{display:block;white-space:pre-wrap;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:11px;max-height:200px;overflow:auto}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
+    padding:10px 16px;border-radius:10px;font-size:13px;box-shadow:var(--shadow);z-index:80;opacity:0;transition:.2s;pointer-events:none}
+  .toast.show{opacity:1}
+  .loadingbar{height:2px;background:linear-gradient(90deg,transparent,var(--brand),transparent);background-size:200% 100%;animation:l 1.1s linear infinite;border-radius:2px;margin-bottom:10px}
+  @keyframes l{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <span class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2.5C12 2.5 5 10 5 15a7 7 0 0 0 14 0c0-5-7-12.5-7-12.5Z" fill="#fff" fill-opacity=".95"/><path d="M9 15a3 3 0 0 0 3 3" stroke="#0e7490" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+      <div>Stillwater Command Center<div class="sub">Paid leads · ads · money — one screen</div></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="pillrow" id="statusPills"></div>
+    <select id="windowSel" class="ctrl" title="Ad spend window">
+      <option value="today">Today</option>
+      <option value="last_7d">7 days</option>
+      <option value="last_30d" selected>30 days</option>
+      <option value="this_month">MTD</option>
+      <option value="maximum">All time</option>
+    </select>
+    <button class="btn ghost sm" id="themeBtn" title="Toggle theme">◐</button>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="leads">Leads</button>
+    <button data-tab="buyers">Buyers</button>
+    <button data-tab="ads">Ads</button>
+    <button data-tab="money">Money</button>
+  </nav>
+
+  <div id="ctxBanner" class="banner hide"></div>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section id="tab-dashboard">
+    <div class="kpis" id="kpiStrip"></div>
+    <div class="grid g2">
+      <div class="panel">
+        <div class="hd"><h3>Activity — leads vs ad spend</h3><span class="spacer" style="flex:1"></span><span class="sub" id="actSub"></span></div>
+        <div class="bd"><div class="chartbox"><canvas id="actChart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="hd"><h3>Live activity</h3>
+          <span style="flex:1"></span>
+          <select id="feedFilter" class="ctrl sm" style="padding:4px 8px">
+            <option value="all">All</option><option value="lead">Leads</option>
+            <option value="money">Money</option><option value="ad">Ads</option>
+          </select>
+        </div>
+        <div class="bd"><div class="feed" id="feed"></div></div>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="panel">
+        <div class="hd"><h3>Spend by segment</h3><span style="flex:1"></span><span class="sub" id="segSub"></span></div>
+        <div class="bd"><div class="chartbox"><canvas id="segChart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="hd"><h3>Channel status</h3></div>
+        <div class="bd" id="channelPanel"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LEADS ===================== -->
+  <section id="tab-leads" class="hide">
+    <div class="sectiontitle">Lead inbox</div>
+    <div class="toolbar">
+      <input type="text" id="leadSearch" class="ctrl" placeholder="Search name / email / city…">
+      <select id="leadStatusFilter" class="ctrl"><option value="">All statuses</option></select>
+      <select id="leadSegFilter" class="ctrl"><option value="">All segments</option></select>
+      <label class="status" style="cursor:pointer"><input type="checkbox" id="unbatchedOnly"> un-batched only</label>
+      <span style="flex:1"></span>
+      <span class="muted" id="leadCount"></span>
+      <button class="btn primary" id="makeBatchBtn">Create batch from selected</button>
+    </div>
+    <div class="panel">
+      <div class="tablewrap"><table id="leadsTable">
+        <thead><tr>
+          <th class="checkcol"><input type="checkbox" id="leadAll"></th>
+          <th>Created</th><th>Name</th><th>Contact</th><th>Location</th>
+          <th>Segment</th><th>Source</th><th>Status</th><th>Routing</th>
+        </tr></thead>
+        <tbody id="leadsBody"></tbody>
+      </table></div>
+    </div>
+
+    <div class="sectiontitle" style="margin-top:24px">Batches</div>
+    <div class="panel">
+      <div class="tablewrap"><table>
+        <thead><tr><th>Batch</th><th>Buyer</th><th>Segment</th><th>Leads</th><th>Excl.</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="batchBody"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- ===================== BUYERS ===================== -->
+  <section id="tab-buyers" class="hide">
+    <div class="toolbar">
+      <div class="sectiontitle" style="margin:0">Buyers</div>
+      <span style="flex:1"></span>
+      <button class="btn primary" id="addBuyerBtn">+ Add buyer</button>
+    </div>
+    <div class="banner" style="background:var(--panel2);color:var(--ink2);font-weight:500">
+      The public application form (<b>/buyers/apply</b>) lives in the full app. New applicants land here as <b>pending</b> for approval. Default pricing is <b>per-lead</b>, set per buyer.
+    </div>
+    <div class="panel">
+      <div class="tablewrap"><table>
+        <thead><tr><th>Company</th><th>Contact</th><th>Wants (segments)</th><th>Provinces</th><th>$/lead</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="buyersBody"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- ===================== ADS ===================== -->
+  <section id="tab-ads" class="hide">
+    <div class="toolbar">
+      <div class="sectiontitle" style="margin:0">Meta ads</div>
+      <span class="sub" id="adsWin"></span>
+      <span style="flex:1"></span>
+      <button class="btn" id="newBatchSkillBtn" title="Triggers the ad-batch skill in chat">+ New ad batch (skill)</button>
+      <button class="btn" id="refreshAdsBtn">↻ Refresh</button>
+    </div>
+
+    <div class="sectiontitle" style="font-size:14px">Ad sets — budget &amp; scale</div>
+    <div class="panel" style="margin-bottom:22px">
+      <div class="tablewrap"><table>
+        <thead><tr><th>Ad set</th><th>Account</th><th>Status</th><th>Daily budget</th><th>Spend</th><th>Actions</th></tr></thead>
+        <tbody id="adsetBody"></tbody>
+      </table></div>
+    </div>
+
+    <div class="sectiontitle" style="font-size:14px">Creatives</div>
+    <div class="panel">
+      <div class="tablewrap"><table>
+        <thead><tr><th>Creative</th><th>Segment</th><th>Acct</th><th>Status</th><th>Spend</th><th>Leads</th><th>CPL</th><th>CTR</th><th>Decision</th><th></th></tr></thead>
+        <tbody id="adsBody"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- ===================== MONEY ===================== -->
+  <section id="tab-money" class="hide">
+    <div class="sectiontitle">Money — P&amp;L by segment</div>
+    <div class="banner" style="background:var(--panel2);color:var(--ink2);font-weight:500">
+      Spend is <b>live from Meta</b>. Revenue is from invoices tracked here. Connect <b>Stripe</b> in the full app to auto-create invoices and flip them to paid by webhook.
+    </div>
+    <div class="panel" style="margin-bottom:22px">
+      <div class="tablewrap"><table>
+        <thead><tr><th>Segment</th><th>Spend</th><th>Leads (Meta)</th><th>CPL</th><th>Revenue</th><th>Profit</th></tr></thead>
+        <tbody id="pnlBody"></tbody>
+        <tfoot id="pnlFoot"></tfoot>
+      </table></div>
+    </div>
+    <div class="sectiontitle" style="font-size:14px">Invoices</div>
+    <div class="panel">
+      <div class="tablewrap"><table>
+        <thead><tr><th>Invoice</th><th>Buyer</th><th>Batch</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="invBody"></tbody>
+      </table></div>
+    </div>
+  </section>
+</div>
+
+<!-- modal -->
+<div class="modal-bg" id="modalBg"><div class="modal"><div class="hd"><h3 id="modalTitle"></h3><span style="flex:1"></span><button class="btn ghost sm" id="modalX">✕</button></div><div class="bd" id="modalBody"></div><div class="ft" id="modalFoot"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============ config ============ */
+const META = "mcp__2859ede8-9c7e-416b-8b4e-736c48aee4c7";
+const HS   = "mcp__d186346b-7230-4528-91c1-01ba7f42c5ad";
+const AD_ACCOUNTS = [
+  {id:"822976640501914",  name:"GetInsured BC 1"},
+  {id:"1570949750579308", name:"GetInsured BC 2"},
+  {id:"2042313213255081", name:"GetInsuredBC 3"}
+];
+const SEGMENTS = ["parents","self-employed","newcomers","trades","young-professionals","single-parents","seniors","55plus"];
+const HS_PROPS_FULL = ["firstname","lastname","email","phone","city","state","createdate","lifecyclestage","hs_lead_status","hs_latest_source","hs_analytics_source_data_1","hs_analytics_source_data_2"];
+const HS_PROPS_MIN  = ["firstname","lastname","email","phone","city","state","createdate","lifecyclestage","hs_lead_status","hs_latest_source"];
+
+/* ============ state ============ */
+const state = {
+  leads:[], leadsTotal:0, ads:[], adsets:[], spendBySeg:{}, leadsBySeg:{},
+  conn:{meta:"off",hubspot:"off"}, win:"last_30d", loaded:false
+};
+const store = {
+  get(k,d){ try{const v=localStorage.getItem("sw_"+k);return v?JSON.parse(v):d;}catch(e){return d;} },
+  set(k,v){ try{localStorage.setItem("sw_"+k,JSON.stringify(v));}catch(e){} }
+};
+let buyers   = store.get("buyers",[]);
+let batches  = store.get("batches",[]);
+let invoices = store.get("invoices",[]);
+let events   = store.get("events",[]);
+let overrides= store.get("lead_overrides",{}); // hubspotId -> {batched, batch_id}
+const settings = Object.assign({scale_step:0.2, default_price_per_lead:25}, store.get("settings",{}));
+
+/* ============ helpers ============ */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cad=n=>"$"+(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const uid=()=>Math.random().toString(36).slice(2,9);
+function money(s){ if(s==null)return 0; if(typeof s==="number")return s; if(/not available/i.test(s))return 0;
+  const n=parseFloat(String(s).replace(/[^0-9.\-]/g,"")); return isNaN(n)?0:n; }
+function intval(s){ if(s==null)return 0; if(/not available/i.test(String(s)))return 0;
+  const n=parseInt(String(s).replace(/[^0-9\-]/g,""),10); return isNaN(n)?0:n; }
+function resCount(r){ return intval(r&&typeof r==="object"?r.value:r); }
+function cprVal(r){ return money(r&&typeof r==="object"?r.value:r); }
+function parseSegment(name){
+  if(!name)return "—";
+  const parts=String(name).split("—").map(x=>x.trim()).filter(Boolean);
+  let label = parts.length>1?parts[1]:parts[0];
+  const low=label.toLowerCase();
+  for(const s of SEGMENTS){ if(low.replace(/\s+/g,"-").includes(s)) return s; }
+  if(low.includes("self"))return "self-employed";
+  if(low.includes("55"))return "55plus";
+  if(low.includes("senior"))return "seniors";
+  if(low.includes("parent"))return "parents";
+  if(low.includes("trade"))return "trades";
+  if(low.includes("newcomer"))return "newcomers";
+  return label||"—";
+}
+function timeAgo(d){ const t=(Date.now()-new Date(d).getTime())/1000;
+  if(t<60)return "just now"; if(t<3600)return Math.floor(t/60)+"m ago";
+  if(t<86400)return Math.floor(t/3600)+"h ago"; return Math.floor(t/86400)+"d ago"; }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
+function logEvent(type,text){ events.unshift({ts:new Date().toISOString(),type,text}); events=events.slice(0,200); store.set("events",events); renderFeed(); }
+function persist(){ store.set("buyers",buyers); store.set("batches",batches); store.set("invoices",invoices); store.set("lead_overrides",overrides); }
+
+/* ============ MCP plumbing ============ */
+async function callTool(name,args){
+  if(!window.cowork||!window.cowork.callMcpTool) throw new Error("no-cowork");
+  const r=await window.cowork.callMcpTool(name,args);
+  if(r&&r.isError) throw new Error((r.content&&r.content[0]&&r.content[0].text)||"tool error");
+  let data=r?r.structuredContent:null;
+  if(data==null && r&&r.content&&r.content[0]&&typeof r.content[0].text==="string"){
+    try{ data=JSON.parse(r.content[0].text); }catch(e){ data=r.content[0].text; }
+  }
+  return data;
+}
+function metaEntities(data){
+  // data: {ad_entities:"[...]", summary:{...}}  OR already parsed
+  if(!data) return [];
+  let raw=data.ad_entities!==undefined?data.ad_entities:data;
+  if(typeof raw==="string"){ try{ raw=JSON.parse(raw); }catch(e){ raw=[]; } }
+  return Array.isArray(raw)?raw:[];
+}
+
+/* ============ data loads ============ */
+async function loadLeads(){
+  let res;
+  try{
+    res=await callTool(HS+"__search_crm_objects",{objectType:"contacts",limit:100,
+      sorts:[{propertyName:"createdate",direction:"DESCENDING"}], properties:HS_PROPS_FULL,
+      chatInsights:{userIntent:"View and route inbound insurance leads",satisfaction:"NEUTRAL"}});
+  }catch(e){
+    try{
+      res=await callTool(HS+"__search_crm_objects",{objectType:"contacts",limit:100,
+        sorts:[{propertyName:"createdate",direction:"DESCENDING"}], properties:HS_PROPS_MIN,
+        chatInsights:{userIntent:"View and route inbound insurance leads",satisfaction:"NEUTRAL"}});
+    }catch(e2){ state.conn.hubspot="off"; throw e2; }
+  }
+  state.conn.hubspot="ok";
+  const rows=(res&&res.results)||[];
+  state.leadsTotal=(res&&res.total)||rows.length;
+  state.leads=rows.map(r=>{
+    const p=r.properties||{};
+    const name=[p.firstname,p.lastname].filter(Boolean).join(" ").trim()||p.hs_full_name_or_email||"(no name)";
+    const srcDetail=[p.hs_analytics_source_data_1,p.hs_analytics_source_data_2].filter(Boolean).join(" / ");
+    const seg=parseSegment(srcDetail)!=="—"?parseSegment(srcDetail):"—";
+    return {id:String(r.id||p.hs_object_id), name, email:p.email||"", phone:p.phone||"",
+      city:p.city||"", province:p.state||"", created:p.createdate||"",
+      segment:seg, source:p.hs_latest_source||p.hs_analytics_source||"—",
+      lifecycle:p.lifecyclestage||"", leadStatus:p.hs_lead_status||"" };
+  });
+  // segment lead counts
+  state.leadsBySeg={};
+  state.leads.forEach(l=>{ if(l.segment&&l.segment!=="—") state.leadsBySeg[l.segment]=(state.leadsBySeg[l.segment]||0)+1; });
+}
+
+async function loadAds(){
+  const win=state.win;
+  const ads=[], adsets=[]; let anyOk=false;
+  for(const acc of AD_ACCOUNTS){
+    try{
+      const a=await callTool(META+"__ads_get_ad_entities",{ad_account_id:acc.id,level:"ad",date_preset:win,limit:100,
+        fields:["id","name","status","spend","impressions","clicks","ctr","adset_id","campaign_id","results","cost_per_result"]});
+      metaEntities(a).forEach(e=>{
+        const spend=money(e.amount_spent), leads=resCount(e.results);
+        ads.push({id:e.id,name:e.name,status:e.status,acct:acc.name,acctId:acc.id,
+          adset_id:e.adset_id,segment:parseSegment(e.name),
+          spend, leads, cpl:leads>0?spend/leads:cprVal(e.cost_per_result),
+          ctr:money(e.ctr), impressions:intval(e.impressions)});
+      });
+      anyOk=true;
+    }catch(e){ /* skip account */ }
+    try{
+      const s=await callTool(META+"__ads_get_ad_entities",{ad_account_id:acc.id,level:"adset",date_preset:win,limit:50,
+        fields:["id","name","status","daily_budget","lifetime_budget","spend"]});
+      metaEntities(s).forEach(e=>{
+        adsets.push({id:e.id,name:e.name,status:e.status,acct:acc.name,acctId:acc.id,
+          daily_budget:money(e.daily_budget), daily_raw:e.daily_budget, spend:money(e.amount_spent),
+          cbo:/uses ad set daily budget|not available/i.test(String(e.daily_budget||""))&&money(e.daily_budget)===0});
+      });
+    }catch(e){}
+  }
+  state.conn.meta=anyOk?"ok":"off";
+  state.ads=ads; state.adsets=adsets;
+  // spend by segment
+  state.spendBySeg={};
+  ads.forEach(a=>{ const k=a.segment||"—"; if(!state.spendBySeg[k])state.spendBySeg[k]={spend:0,leads:0}; state.spendBySeg[k].spend+=a.spend; state.spendBySeg[k].leads+=a.leads; });
+}
+
+/* ============ derived ============ */
+function totalSpend(){ return state.ads.reduce((s,a)=>s+a.spend,0); }
+function totalMetaLeads(){ return state.ads.reduce((s,a)=>s+a.leads,0); }
+function leadsToday(){ const d=new Date();d.setHours(0,0,0,0); return state.leads.filter(l=>new Date(l.created)>=d).length; }
+function leadsThisWeek(){ const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()); return state.leads.filter(l=>new Date(l.created)>=d).length; }
+function isQualified(l){ return /qualified/i.test(l.leadStatus)||/(marketingqualifiedlead|salesqualifiedlead|opportunity|customer)/i.test(l.lifecycle); }
+function revenuePaid(){ return invoices.filter(i=>i.status==="paid").reduce((s,i)=>s+i.amount,0); }
+function activeBuyers(){ return buyers.filter(b=>b.status==="active").length; }
+
+/* ============ rendering ============ */
+function renderStatusPills(){
+  const map={ok:["ok","live"],off:["off","offline"],warn:["warn","check"]};
+  const pill=(n,st)=>`<span class="status"><span class="dot ${map[st][0]}"></span>${n} <span class="muted">${map[st][1]}</span></span>`;
+  $("#statusPills").innerHTML = pill("Meta",state.conn.meta)+pill("HubSpot",state.conn.hubspot)+
+    `<span class="status"><span class="dot off"></span>Stripe <span class="muted">v2</span></span>`;
+}
+function renderChannelPanel(){
+  const rows=[
+    ["Meta Marketing API",state.conn.meta,`${state.ads.length} creatives · ${state.adsets.length} ad sets`],
+    ["HubSpot CRM",state.conn.hubspot,`${state.leadsTotal} contacts`],
+    ["Stripe",( "off"),"Connect in full app for invoicing"],
+    ["Supabase store",("off"),"Buyers/batches tracked locally for now"]
+  ];
+  $("#channelPanel").innerHTML = rows.map(([n,st,meta])=>{
+    const d=st==="ok"?"ok":st==="warn"?"warn":"off";
+    return `<div class="fitem"><div class="fico batch"><span class="dot ${d}"></span></div>
+      <div style="flex:1"><div class="ftxt">${n}</div><div class="ftime">${esc(meta)}</div></div>
+      <div class="tag ${st==="ok"?"active":""}">${st==="ok"?"connected":"—"}</div></div>`;
+  }).join("");
+}
+function renderKpis(){
+  const spend=totalSpend(), rev=revenuePaid(), profit=rev-spend;
+  const qrate=state.leads.length?Math.round(state.leads.filter(isQualified).length/state.leads.length*100):0;
+  const cards=[
+    {label:"Leads today",val:leadsToday(),meta:leadsThisWeek()+" this week"},
+    {label:"Active buyers",val:activeBuyers(),meta:buyers.length+" total"},
+    {label:"Ad spend ("+winLabel()+")",val:cad(spend),meta:totalMetaLeads()+" Meta leads"},
+    {label:"Revenue",val:cad(rev),meta:invoices.filter(i=>i.status==="paid").length+" paid"},
+    {label:"Profit",val:cad(profit),meta:rev||spend?(profit>=0?"in the black":"in the red"):"—",cls:profit>=0?"good":"red"},
+    {label:"Qualified rate",val:qrate+"%",meta:state.leads.filter(isQualified).length+" / "+state.leads.length}
+  ];
+  $("#kpiStrip").innerHTML=cards.map(c=>`<div class="kpi ${c.cls||""}"><div class="label">${esc(c.label)}</div><div class="val">${esc(c.val)}</div><div class="meta">${esc(c.meta)}</div></div>`).join("");
+}
+function winLabel(){ return {today:"today",last_7d:"7d",last_30d:"30d",this_month:"MTD",maximum:"all"}[state.win]||state.win; }
+
+let actChart,segChart;
+function renderCharts(){
+  // leads per day (14d) + spend reference
+  const days=[],labels=[];
+  for(let i=13;i>=0;i--){ const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d);labels.push(d.toLocaleDateString(undefined,{month:"short",day:"numeric"})); }
+  const leadCounts=days.map(d=>{ const n=new Date(d);n.setDate(n.getDate()+1); return state.leads.filter(l=>{const t=new Date(l.created);return t>=d&&t<n;}).length; });
+  const css=getComputedStyle(document.documentElement);
+  const cv=n=>css.getPropertyValue(n).trim();
+  const ink2=cv("--ink2"), line=cv("--line"), violet=cv("--violet"), brand=cv("--brand");
+  if(actChart)actChart.destroy();
+  actChart=new Chart($("#actChart"),{type:"bar",
+    data:{labels,datasets:[{label:"Leads / day",data:leadCounts,backgroundColor:violet,borderRadius:5,maxBarThickness:22}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:ink2,maxRotation:0,autoSkip:true}},y:{beginAtZero:true,grid:{color:line},ticks:{color:ink2,precision:0}}}}});
+  $("#actSub").textContent="last 14 days · "+cad(totalSpend())+" spend ("+winLabel()+")";
+  // spend by segment
+  const segs=Object.entries(state.spendBySeg).filter(([k,v])=>v.spend>0).sort((a,b)=>b[1].spend-a[1].spend);
+  if(segChart)segChart.destroy();
+  segChart=new Chart($("#segChart"),{type:"bar",
+    data:{labels:segs.map(s=>s[0]),datasets:[{label:"Spend",data:segs.map(s=>s[1].spend),backgroundColor:brand,borderRadius:5,maxBarThickness:26}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>cad(c.parsed.x)}}},
+      scales:{x:{beginAtZero:true,grid:{color:line},ticks:{color:ink2,callback:v=>"$"+v}},y:{grid:{display:false},ticks:{color:ink2}}}}});
+  $("#segSub").textContent=segs.length?segs.length+" segments":"no spend yet";
+}
+function renderFeed(){
+  const filter=$("#feedFilter").value;
+  const items=[];
+  state.leads.slice(0,30).forEach(l=>items.push({ts:l.created,type:"lead",text:`New lead — <b>${esc(l.name)}</b>${l.segment!=="—"?" · "+esc(l.segment):""}${l.city?" · "+esc(l.city):""}`}));
+  events.forEach(e=>items.push(e));
+  const ico={lead:"lead",money:"money",ad:"ad",batch:"batch"};
+  const txt={lead:"●",money:"$",ad:"◆",batch:"▣"};
+  const shown=items.filter(i=>filter==="all"||i.type===filter).sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,40);
+  $("#feed").innerHTML=shown.length?shown.map(i=>`<div class="fitem"><div class="fico ${ico[i.type]||"batch"}">${txt[i.type]||"•"}</div>
+    <div style="flex:1"><div class="ftxt">${i.text}</div><div class="ftime">${timeAgo(i.ts)}</div></div></div>`).join("")
+    :`<div class="empty"><div class="big">Nothing yet</div>New leads and actions show up here live.</div>`;
+}
+
+/* ---- leads tab ---- */
+function leadRouting(l){
+  const o=overrides[l.id];
+  if(o&&o.batched){ const b=batches.find(x=>x.id===o.batch_id); return {label:b?("In "+b.name):"Batched",cls:"sent"}; }
+  return {label:"Un-batched",cls:""};
+}
+function renderLeads(){
+  const q=($("#leadSearch").value||"").toLowerCase();
+  const sf=$("#leadStatusFilter").value, gf=$("#leadSegFilter").value, ub=$("#unbatchedOnly").checked;
+  let rows=state.leads.filter(l=>{
+    if(q&&!(`${l.name} ${l.email} ${l.city} ${l.province}`.toLowerCase().includes(q)))return false;
+    if(gf&&l.segment!==gf)return false;
+    if(sf){ const s=isQualified(l)?"qualified":"new"; if(s!==sf)return false; }
+    if(ub&&overrides[l.id]&&overrides[l.id].batched)return false;
+    return true;
+  });
+  $("#leadCount").textContent=`${rows.length} shown · ${state.leadsTotal} total in HubSpot`;
+  // filters populate
+  const segOpts=[...new Set(state.leads.map(l=>l.segment).filter(s=>s&&s!=="—"))];
+  $("#leadSegFilter").innerHTML=`<option value="">All segments</option>`+segOpts.map(s=>`<option ${gf===s?"selected":""}>${esc(s)}</option>`).join("");
+  if($("#leadStatusFilter").options.length<=1)$("#leadStatusFilter").innerHTML=`<option value="">All statuses</option><option value="new">New</option><option value="qualified">Qualified</option>`;
+  $("#leadsBody").innerHTML=rows.length?rows.map(l=>{
+    const r=leadRouting(l), qual=isQualified(l);
+    return `<tr>
+      <td class="checkcol"><input type="checkbox" class="leadck" data-id="${l.id}" ${r.cls==="sent"?"disabled":""}></td>
+      <td>${l.created?new Date(l.created).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"—"}<div class="ftime">${l.created?timeAgo(l.created):""}</div></td>
+      <td><b>${esc(l.name)}</b></td>
+      <td>${esc(l.email)||"<span class=muted>—</span>"}<div class="ftime">${esc(l.phone)}</div></td>
+      <td>${esc(l.city||"—")}${l.province?", "+esc(l.province):""}</td>
+      <td>${l.segment!=="—"?`<span class="tag seg">${esc(l.segment)}</span>`:"<span class=muted>—</span>"}</td>
+      <td><span class="muted">${esc(l.source)}</span></td>
+      <td><span class="tag ${qual?"active":"new"}">${qual?"qualified":"new"}</span></td>
+      <td><span class="tag ${r.cls}">${esc(r.label)}</span></td>
+    </tr>`;
+  }).join("")
+    :`<tr><td colspan="9"><div class="empty"><div class="big">No leads match</div>${state.leadsTotal<=1?"Your funnel is pre-launch — leads will stream in here the moment the quiz fires a HubSpot contact.":"Adjust filters to see more."}</div></td></tr>`;
+}
+
+/* ---- buyers ---- */
+function renderBuyers(){
+  $("#buyersBody").innerHTML=buyers.length?buyers.map(b=>`<tr>
+    <td><b>${esc(b.company)}</b></td>
+    <td>${esc(b.contact_name||"—")}<div class="ftime">${esc(b.email||"")}</div></td>
+    <td>${(b.segments_wanted||[]).map(s=>`<span class="tag seg">${esc(s)}</span>`).join(" ")||"<span class=muted>any</span>"}</td>
+    <td>${(b.provinces_wanted||[]).join(", ")||"<span class=muted>any</span>"}</td>
+    <td>${cad(b.price_per_lead)}</td>
+    <td><span class="tag ${b.status==="active"?"active":b.status==="paused"?"paused":"new"}">${esc(b.status)}</span></td>
+    <td><div class="row-actions">
+      ${b.status!=="active"?`<button class="btn sm good" data-buyer-approve="${b.id}">Approve</button>`:`<button class="btn sm" data-buyer-pause="${b.id}">Pause</button>`}
+      <button class="btn sm" data-buyer-edit="${b.id}">Edit</button>
+      <button class="btn sm danger" data-buyer-del="${b.id}">✕</button>
+    </div></td></tr>`).join("")
+    :`<tr><td colspan="7"><div class="empty"><div class="big">No buyers yet</div>Add your first buyer to start routing batches.</div></td></tr>`;
+}
+
+/* ---- ads ---- */
+function renderAds(){
+  $("#adsWin").textContent="window: "+winLabel();
+  // adsets
+  $("#adsetBody").innerHTML=state.adsets.length?state.adsets.map(s=>`<tr>
+    <td><b>${esc(s.name)}</b></td><td class="muted">${esc(s.acct)}</td>
+    <td><span class="tag ${s.status==="ACTIVE"?"active":"paused"}">${esc(s.status||"—")}</span></td>
+    <td>${s.cbo?'<span class="muted">campaign-level (CBO)</span>':cad(s.daily_budget)}</td>
+    <td>${cad(s.spend)}</td>
+    <td><div class="row-actions">
+      ${!s.cbo?`<button class="btn sm" data-scale="${s.id}" data-acct="${s.acctId}" data-bud="${s.daily_budget}">Scale +${Math.round(settings.scale_step*100)}%</button>`:""}
+      ${s.status==="ACTIVE"?`<button class="btn sm danger" data-killset="${s.id}" data-acct="${s.acctId}">Kill</button>`:`<button class="btn sm good" data-resumeset="${s.id}" data-acct="${s.acctId}">Resume</button>`}
+    </div></td></tr>`).join("")
+    :`<tr><td colspan="6"><div class="empty">${state.conn.meta==="ok"?"No ad sets in this window.":"Meta not connected in this view."}</div></td></tr>`;
+  // creatives
+  const ads=[...state.ads].sort((a,b)=>b.spend-a.spend);
+  $("#adsBody").innerHTML=ads.length?ads.map(a=>{
+    let dec="—",dcls="";
+    if(a.spend>=5&&a.leads===0){dec="kill — no leads";dcls="paused";}
+    else if(a.leads>0&&a.cpl<=8){dec="scale — cheap leads";dcls="active";}
+    else if(a.spend>0){dec="watch";}
+    return `<tr>
+      <td><b>${esc(a.name)}</b></td>
+      <td>${a.segment!=="—"?`<span class="tag seg">${esc(a.segment)}</span>`:"<span class=muted>—</span>"}</td>
+      <td class="muted">${esc(a.acct.replace("GetInsured BC ","#").replace("GetInsuredBC ","#"))}</td>
+      <td><span class="tag ${a.status==="ACTIVE"?"active":"paused"}">${esc(a.status||"—")}</span></td>
+      <td>${cad(a.spend)}</td><td>${a.leads}</td>
+      <td>${a.leads>0||a.cpl>0?cad(a.cpl):"<span class=muted>—</span>"}</td>
+      <td>${a.ctr?a.ctr.toFixed(2)+"%":"<span class=muted>—</span>"}</td>
+      <td>${dec!=="—"?`<span class="tag ${dcls}">${esc(dec)}</span>`:"<span class=muted>—</span>"}</td>
+      <td><div class="row-actions">
+        ${a.status==="ACTIVE"?`<button class="btn sm danger" data-killad="${a.id}" data-acct="${a.acctId}">Kill</button>`:`<button class="btn sm good" data-resumead="${a.id}" data-acct="${a.acctId}">Resume</button>`}
+      </div></td></tr>`;
+  }).join("")
+    :`<tr><td colspan="10"><div class="empty">${state.conn.meta==="ok"?"No creatives with data in this window.":"Meta not connected in this view."}</div></td></tr>`;
+}
+
+/* ---- batches + money ---- */
+function buyerName(id){ const b=buyers.find(x=>x.id===id); return b?b.company:"—"; }
+function renderBatches(){
+  $("#batchBody").innerHTML=batches.length?batches.slice().reverse().map(b=>`<tr>
+    <td><b>${esc(b.name)}</b><div class="ftime">${timeAgo(b.created_at)}</div></td>
+    <td>${esc(buyerName(b.buyer_id))}</td>
+    <td>${b.segment_filter?`<span class="tag seg">${esc(b.segment_filter)}</span>`:"<span class=muted>mixed</span>"}</td>
+    <td>${b.lead_count}</td>
+    <td>${b.exclusivity==="exclusive"?'<span class="tag">exclusive</span>':'<span class="tag">shared</span>'}</td>
+    <td>${cad(b.total_price)}<div class="ftime">${cad(b.unit_price)}/lead</div></td>
+    <td><span class="tag ${b.status==="paid"?"paid":b.status==="draft"?"new":"sent"}">${esc(b.status)}</span></td>
+    <td><div class="row-actions">
+      ${b.status==="draft"?`<button class="btn sm primary" data-send="${b.id}">Send (API push)</button>`:""}
+      ${(b.status==="sent")?`<button class="btn sm" data-invoice="${b.id}">Generate invoice</button>`:""}
+      <button class="btn sm" data-payload="${b.id}">Payload</button>
+    </div></td></tr>`).join("")
+    :`<tr><td colspan="8"><div class="empty"><div class="big">No batches yet</div>Select leads in the inbox above and click “Create batch”.</div></td></tr>`;
+}
+function renderMoney(){
+  // pnl by segment
+  const segs=new Set([...Object.keys(state.spendBySeg),...Object.keys(state.leadsBySeg)]);
+  const revBySeg={};
+  invoices.filter(i=>i.status==="paid").forEach(i=>{ const b=batches.find(x=>x.id===i.batch_id); const s=b&&b.segment_filter?b.segment_filter:"(mixed)"; revBySeg[s]=(revBySeg[s]||0)+i.amount; });
+  Object.keys(revBySeg).forEach(s=>segs.add(s));
+  let tS=0,tL=0,tR=0;
+  const rows=[...segs].filter(s=>s&&s!=="—").map(s=>{
+    const sp=(state.spendBySeg[s]&&state.spendBySeg[s].spend)||0;
+    const ld=(state.spendBySeg[s]&&state.spendBySeg[s].leads)||0;
+    const rev=revBySeg[s]||0; tS+=sp;tL+=ld;tR+=rev;
+    return `<tr><td><span class="tag seg">${esc(s)}</span></td><td>${cad(sp)}</td><td>${ld}</td>
+      <td>${ld>0?cad(sp/ld):"<span class=muted>—</span>"}</td><td>${cad(rev)}</td>
+      <td class="${rev-sp>=0?"":""}" style="color:${rev-sp>=0?"var(--green)":"var(--red)"}">${cad(rev-sp)}</td></tr>`;
+  });
+  $("#pnlBody").innerHTML=rows.length?rows.join(""):`<tr><td colspan="6"><div class="empty">No segment spend or revenue yet in this window.</div></td></tr>`;
+  $("#pnlFoot").innerHTML=`<tr><th>Total</th><th>${cad(tS)}</th><th>${tL}</th><th>${tL>0?cad(tS/tL):"—"}</th><th>${cad(tR)}</th><th style="color:${tR-tS>=0?"var(--green)":"var(--red)"}">${cad(tR-tS)}</th></tr>`;
+  // invoices
+  $("#invBody").innerHTML=invoices.length?invoices.slice().reverse().map(i=>`<tr>
+    <td><b>${esc(i.number)}</b><div class="ftime">${timeAgo(i.created_at)}</div></td>
+    <td>${esc(buyerName(i.buyer_id))}</td>
+    <td>${esc((batches.find(b=>b.id===i.batch_id)||{}).name||"—")}</td>
+    <td>${cad(i.amount)}</td>
+    <td><span class="tag ${i.status==="paid"?"paid":i.status==="void"?"paused":"sent"}">${esc(i.status)}</span></td>
+    <td><div class="row-actions">
+      ${i.status==="open"?`<button class="btn sm good" data-pay="${i.id}">Mark paid</button>`:""}
+      ${i.status!=="void"?`<button class="btn sm danger" data-void="${i.id}">Void / refund</button>`:""}
+    </div></td></tr>`).join("")
+    :`<tr><td colspan="6"><div class="empty"><div class="big">No invoices yet</div>Generate one from a sent batch.</div></td></tr>`;
+}
+
+function renderAll(){ renderStatusPills();renderChannelPanel();renderKpis();renderCharts();renderFeed();
+  renderLeads();renderBuyers();renderAds();renderBatches();renderMoney(); }
+
+/* ============ Meta write actions ============ */
+async function metaUpdate(acct,id,type,fields,desc){
+  try{
+    await callTool(META+"__ads_update_entity",{ad_account_id:acct,entity_id:id,entity_type:type,fields:JSON.stringify(fields)});
+    toast(desc+" ✓"); logEvent("ad",desc);
+    await loadAds(); renderAll();
+  }catch(e){ toast("Failed: "+(e.message||e)); }
+}
+function bindAdActions(){
+  $("#adsBody").onclick=e=>{
+    const k=e.target.closest("[data-killad]"),r=e.target.closest("[data-resumead]");
+    if(k){ if(confirm("Pause this ad in Meta? It stops delivering immediately."))
+      metaUpdate(k.dataset.acct,k.dataset.killad,"ad",{status:"PAUSED"},"Killed creative"); }
+    if(r){ metaUpdate(r.dataset.acct,r.dataset.resumead,"ad",{status:"ACTIVE"},"Resumed creative"); }
+  };
+  $("#adsetBody").onclick=e=>{
+    const sc=e.target.closest("[data-scale]"),k=e.target.closest("[data-killset]"),r=e.target.closest("[data-resumeset]");
+    if(sc){ const cur=parseFloat(sc.dataset.bud)||0; const next=Math.max(1.41,cur*(1+settings.scale_step));
+      const cents=Math.round(next*100);
+      if(confirm(`Scale daily budget ${cad(cur)} → ${cad(next)} (+${Math.round(settings.scale_step*100)}%)?`))
+        metaUpdate(sc.dataset.acct,sc.dataset.scale,"ad_set",{daily_budget:cents},`Scaled budget to ${cad(next)}`); }
+    if(k){ if(confirm("Pause this ad set in Meta?")) metaUpdate(k.dataset.acct,k.dataset.killset,"ad_set",{status:"PAUSED"},"Killed ad set"); }
+    if(r){ metaUpdate(r.dataset.acct,r.dataset.resumeset,"ad_set",{status:"ACTIVE"},"Resumed ad set"); }
+  };
+}
+
+/* ============ modals ============ */
+function openModal(title,bodyHtml,footHtml){ $("#modalTitle").textContent=title;$("#modalBody").innerHTML=bodyHtml;$("#modalFoot").innerHTML=footHtml||"";$("#modalBg").classList.add("show"); }
+function closeModal(){ $("#modalBg").classList.remove("show"); }
+$("#modalX").onclick=closeModal; $("#modalBg").onclick=e=>{if(e.target===$("#modalBg"))closeModal();};
+
+function buyerForm(b){
+  b=b||{segments_wanted:[],provinces_wanted:[]};
+  const segs=SEGMENTS.map(s=>`<span class="segchk ${(b.segments_wanted||[]).includes(s)?"on":""}" data-seg="${s}">${s}</span>`).join("");
+  openModal(b.id?"Edit buyer":"Add buyer",`
+    <div class="field"><label>Company *</label><input id="bf_company" value="${esc(b.company||"")}"></div>
+    <div class="field"><label>Contact name</label><input id="bf_contact" value="${esc(b.contact_name||"")}"></div>
+    <div style="display:flex;gap:10px"><div class="field" style="flex:1"><label>Email</label><input id="bf_email" value="${esc(b.email||"")}"></div>
+      <div class="field" style="flex:1"><label>Phone</label><input id="bf_phone" value="${esc(b.phone||"")}"></div></div>
+    <div class="field"><label>Segments wanted</label><div class="seglist" id="bf_segs">${segs}</div></div>
+    <div style="display:flex;gap:10px"><div class="field" style="flex:1"><label>Provinces (comma-sep)</label><input id="bf_prov" value="${esc((b.provinces_wanted||[]).join(", "))}" placeholder="BC, AB"></div>
+      <div class="field" style="width:130px"><label>$ / lead</label><input id="bf_price" type="number" value="${b.price_per_lead!=null?b.price_per_lead:settings.default_price_per_lead}"></div></div>
+    <div class="field"><label>Notes</label><textarea id="bf_notes">${esc(b.notes||"")}</textarea></div>
+  `,`<button class="btn ghost" onclick="closeModalProxy()">Cancel</button><button class="btn primary" id="bf_save">Save buyer</button>`);
+  $("#bf_segs").onclick=e=>{const c=e.target.closest("[data-seg]");if(c)c.classList.toggle("on");};
+  $("#bf_save").onclick=()=>{
+    const company=$("#bf_company").value.trim(); if(!company){toast("Company is required");return;}
+    const segsSel=[...$("#bf_segs").querySelectorAll(".on")].map(x=>x.dataset.seg);
+    const rec={id:b.id||uid(),company,contact_name:$("#bf_contact").value.trim(),email:$("#bf_email").value.trim(),
+      phone:$("#bf_phone").value.trim(),segments_wanted:segsSel,
+      provinces_wanted:$("#bf_prov").value.split(",").map(x=>x.trim()).filter(Boolean),
+      price_per_lead:parseFloat($("#bf_price").value)||0,notes:$("#bf_notes").value.trim(),
+      status:b.status||"pending",created_at:b.created_at||new Date().toISOString()};
+    const i=buyers.findIndex(x=>x.id===rec.id); if(i>=0)buyers[i]=rec; else buyers.push(rec);
+    persist();renderBuyers();renderKpis();closeModal();toast("Buyer saved");
+  };
+}
+window.closeModalProxy=closeModal;
+
+function batchForm(selIds){
+  const sel=state.leads.filter(l=>selIds.includes(l.id));
+  if(!sel.length){toast("Select at least one lead");return;}
+  const segCounts={}; sel.forEach(l=>{segCounts[l.segment]=(segCounts[l.segment]||0)+1;});
+  const segGuess=Object.entries(segCounts).sort((a,b)=>b[1]-a[1])[0][0];
+  const activeBuyers=buyers.filter(b=>b.status==="active");
+  const buyerOpts=activeBuyers.length?activeBuyers.map(b=>{
+    const fit=(b.segments_wanted||[]).includes(segGuess);
+    return `<option value="${b.id}" data-price="${b.price_per_lead}">${esc(b.company)} — ${cad(b.price_per_lead)}/lead${fit?" · ✓ fit":""}</option>`;
+  }).join(""):`<option value="">No active buyers — approve one first</option>`;
+  openModal("Create batch · "+sel.length+" leads",`
+    <div class="field"><label>Batch name</label><input id="ba_name" value="${esc(segGuess!=="—"?segGuess:"Mixed")} · ${sel.length} leads · ${new Date().toLocaleDateString()}"></div>
+    <div class="field"><label>Assign buyer</label><select id="ba_buyer">${buyerOpts}</select></div>
+    <div style="display:flex;gap:10px">
+      <div class="field" style="flex:1"><label>Exclusivity</label><select id="ba_excl"><option value="exclusive" selected>Exclusive (sold once)</option><option value="shared">Shared</option></select></div>
+      <div class="field" style="width:140px"><label>$ / lead</label><input id="ba_price" type="number" value="${activeBuyers[0]?activeBuyers[0].price_per_lead:settings.default_price_per_lead}"></div>
+    </div>
+    <div class="kv"><span>Total: <b id="ba_total"></b></span><span>Segments: <b>${esc(Object.keys(segCounts).join(", "))}</b></span></div>
+    <div class="ftime" style="margin-top:8px">Exclusive leads are locked from future batches on send.</div>
+  `,`<button class="btn ghost" onclick="closeModalProxy()">Cancel</button><button class="btn primary" id="ba_save" ${activeBuyers.length?"":"disabled"}>Create draft batch</button>`);
+  const recalc=()=>{$("#ba_total").textContent=cad((parseFloat($("#ba_price").value)||0)*sel.length);};
+  $("#ba_buyer").onchange=e=>{const o=e.target.selectedOptions[0];if(o&&o.dataset.price)$("#ba_price").value=o.dataset.price;recalc();};
+  $("#ba_price").oninput=recalc; recalc();
+  $("#ba_save").onclick=()=>{
+    const buyer_id=$("#ba_buyer").value; if(!buyer_id){toast("Pick a buyer");return;}
+    const unit=parseFloat($("#ba_price").value)||0;
+    const batch={id:uid(),name:$("#ba_name").value.trim()||"Batch",buyer_id,
+      segment_filter:Object.keys(segCounts).length===1?segGuess:"",exclusivity:$("#ba_excl").value,
+      lead_ids:sel.map(l=>l.id),lead_snapshots:sel.map(l=>({id:l.id,name:l.name,email:l.email,phone:l.phone,city:l.city,province:l.province,segment:l.segment,source:l.source})),
+      lead_count:sel.length,unit_price:unit,total_price:unit*sel.length,status:"draft",created_at:new Date().toISOString()};
+    batches.push(batch);persist();
+    closeModal();renderBatches();toast("Draft batch created");
+    logEvent("batch","Batch drafted — "+batch.name+" → "+buyerName(buyer_id));
+  };
+}
+
+function sendBatch(id){
+  const b=batches.find(x=>x.id===id); if(!b)return;
+  // lock exclusive leads
+  if(b.exclusivity==="exclusive") b.lead_ids.forEach(lid=>{overrides[lid]={batched:true,batch_id:b.id};});
+  else b.lead_ids.forEach(lid=>{ if(!overrides[lid])overrides[lid]={batched:true,batch_id:b.id}; });
+  b.status="sent"; b.sent_at=new Date().toISOString(); persist();
+  renderBatches();renderLeads();
+  const payload=batchPayload(b);
+  logEvent("batch","Batch sent — "+b.name+" ("+b.lead_count+" leads → "+buyerName(b.buyer_id)+")");
+  openModal("Batch sent · API push payload",`
+    <p class="ink2">${b.lead_count} leads assigned to <b>${esc(buyerName(b.buyer_id))}</b> (${b.exclusivity}). Exclusive leads are now locked.</p>
+    <p class="ftime">Live POST to the buyer endpoint happens server-side in the full app. For now, copy this payload to push it:</p>
+    <code class="payload" id="pl">${esc(JSON.stringify(payload,null,2))}</code>
+  `,`<button class="btn" id="copyPl">Copy payload</button><button class="btn primary" onclick="closeModalProxy()">Done</button>`);
+  $("#copyPl").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(JSON.stringify(payload,null,2));toast("Payload copied");};
+}
+function batchPayload(b){
+  const buyer=buyers.find(x=>x.id===b.buyer_id)||{};
+  return {batch_id:b.id,batch_name:b.name,buyer:{id:buyer.id,company:buyer.company,email:buyer.email},
+    exclusivity:b.exclusivity,unit_price:b.unit_price,total_price:b.total_price,
+    lead_count:b.lead_count,sent_at:b.sent_at,leads:b.lead_snapshots};
+}
+function showPayload(id){ const b=batches.find(x=>x.id===id); if(!b)return;
+  const payload=batchPayload(b);
+  openModal("Batch payload — "+b.name,`<code class="payload">${esc(JSON.stringify(payload,null,2))}</code>`,
+    `<button class="btn" onclick="navigator.clipboard&&navigator.clipboard.writeText(${JSON.stringify(JSON.stringify(payload))});">Copy</button><button class="btn primary" onclick="closeModalProxy()">Close</button>`);
+}
+function makeInvoice(id){
+  const b=batches.find(x=>x.id===id); if(!b)return;
+  const inv={id:uid(),number:"INV-"+(invoices.length+1001),batch_id:b.id,buyer_id:b.buyer_id,
+    amount:b.total_price,status:"open",created_at:new Date().toISOString()};
+  invoices.push(inv); b.status="invoiced"; persist();
+  renderBatches();renderMoney();renderKpis();toast("Invoice "+inv.number+" created");
+  logEvent("money","Invoice "+inv.number+" created — "+cad(inv.amount)+" to "+buyerName(b.buyer_id));
+}
+
+/* ============ events binding ============ */
+function bindStatic(){
+  // tabs
+  $("#tabs").onclick=e=>{const btn=e.target.closest("button[data-tab]");if(!btn)return;
+    $$("#tabs button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");
+    $$("section[id^=tab-]").forEach(s=>s.classList.add("hide"));$("#tab-"+btn.dataset.tab).classList.remove("hide");
+    if(btn.dataset.tab==="dashboard")setTimeout(renderCharts,30);};
+  // window
+  $("#windowSel").value=state.win;
+  $("#windowSel").onchange=async e=>{state.win=e.target.value;setBusy(true);await loadAds();setBusy(false);renderAll();};
+  // theme
+  applyTheme(store.get("theme","light"));
+  $("#themeBtn").onclick=()=>{const t=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";applyTheme(t);store.set("theme",t);renderCharts();};
+  // feed filter
+  $("#feedFilter").onchange=renderFeed;
+  // leads filters
+  ["#leadSearch","#leadStatusFilter","#leadSegFilter"].forEach(s=>{$(s).oninput=renderLeads;$(s).onchange=renderLeads;});
+  $("#unbatchedOnly").onchange=renderLeads;
+  $("#leadAll").onchange=e=>{$$(".leadck:not(:disabled)").forEach(c=>c.checked=e.target.checked);};
+  $("#makeBatchBtn").onclick=()=>{const ids=$$(".leadck:checked").map(c=>c.dataset.id);batchForm(ids);};
+  // batches body
+  $("#batchBody").onclick=e=>{const s=e.target.closest("[data-send]"),i=e.target.closest("[data-invoice]"),p=e.target.closest("[data-payload]");
+    if(s)sendBatch(s.dataset.send); if(i)makeInvoice(i.dataset.invoice); if(p)showPayload(p.dataset.payload);};
+  // buyers
+  $("#addBuyerBtn").onclick=()=>buyerForm(null);
+  $("#buyersBody").onclick=e=>{
+    const ap=e.target.closest("[data-buyer-approve]"),pa=e.target.closest("[data-buyer-pause]"),ed=e.target.closest("[data-buyer-edit]"),de=e.target.closest("[data-buyer-del]");
+    if(ap){buyers.find(b=>b.id===ap.dataset.buyerApprove).status="active";persist();renderBuyers();renderKpis();toast("Buyer approved");}
+    if(pa){buyers.find(b=>b.id===pa.dataset.buyerPause).status="paused";persist();renderBuyers();renderKpis();toast("Buyer paused");}
+    if(ed){buyerForm(buyers.find(b=>b.id===ed.dataset.buyerEdit));}
+    if(de){if(confirm("Delete buyer?")){buyers=buyers.filter(b=>b.id!==de.dataset.buyerDel);persist();renderBuyers();renderKpis();}}
+  };
+  // money
+  $("#invBody").onclick=e=>{const p=e.target.closest("[data-pay]"),v=e.target.closest("[data-void]");
+    if(p){const inv=invoices.find(x=>x.id===p.dataset.pay);inv.status="paid";inv.paid_at=new Date().toISOString();
+      const b=batches.find(x=>x.id===inv.batch_id);if(b)b.status="paid";persist();renderMoney();renderKpis();renderBatches();
+      logEvent("money","Invoice "+inv.number+" paid — "+cad(inv.amount));toast("Marked paid");}
+    if(v){const inv=invoices.find(x=>x.id===v.dataset.void);if(confirm("Void / refund this invoice?")){inv.status="void";
+      // free up leads
+      const b=batches.find(x=>x.id===inv.batch_id);if(b)b.lead_ids.forEach(lid=>{delete overrides[lid];});
+      persist();renderMoney();renderKpis();renderLeads();logEvent("money","Invoice "+inv.number+" voided / refunded");toast("Voided");}}
+  };
+  // ads
+  $("#refreshAdsBtn").onclick=async()=>{setBusy(true);await loadAds();setBusy(false);renderAll();toast("Ads refreshed");};
+  $("#newBatchSkillBtn").onclick=()=>{if(window.sendPrompt)sendPrompt("Run the GetInsuredBC ad batch skill to generate a new PAUSED campaign of creatives for review.");else toast("Open in chat to trigger the skill");};
+  bindAdActions();
+}
+function setBusy(b){ let el=$("#ctxBanner");
+  if(b){el.classList.remove("hide");el.innerHTML='<div class="loadingbar"></div>Loading live data from Meta &amp; HubSpot…';}
+  else if(el.dataset.sticky!=="1"){el.classList.add("hide");} }
+function applyTheme(t){ document.documentElement.setAttribute("data-theme",t); }
+
+/* ============ boot ============ */
+async function boot(){
+  bindStatic(); renderAll();
+  if(!window.cowork||!window.cowork.callMcpTool){
+    const el=$("#ctxBanner");el.dataset.sticky="1";el.classList.remove("hide");
+    el.textContent="Open this view inside Cowork to load live Meta & HubSpot data. Buyers, batches and invoices still work offline.";
+    return;
+  }
+  setBusy(true);
+  await Promise.allSettled([loadLeads(),loadAds()]);
+  setBusy(false); state.loaded=true; renderAll();
+}
+boot();
+</script>
+</body>
+</html>
