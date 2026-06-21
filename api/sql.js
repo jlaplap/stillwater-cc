@@ -8,8 +8,13 @@ const { authed, body } = require('./_auth');
 let pool;
 function getPool() {
   if (!pool) {
+    // Supports a manual DATABASE_URL or the vars added by the Vercel↔Supabase integration.
+    let cs = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || '';
+    // Supabase's pooler cert isn't in Node's trust store. Drop sslmode from the URL so our
+    // ssl option (rejectUnauthorized:false) is what applies, avoiding "self signed certificate".
+    try { const u = new URL(cs); u.searchParams.delete('sslmode'); cs = u.toString(); } catch (e) {}
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL,
+      connectionString: cs,
       ssl: { rejectUnauthorized: false },
       max: 3,
       idleTimeoutMillis: 10000,
@@ -21,7 +26,7 @@ function getPool() {
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
   if (!authed(req)) { res.status(401).json({ error: 'unauthorized' }); return; }
-  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL && !process.env.POSTGRES_PRISMA_URL) { res.status(500).json({ error: 'DATABASE_URL not set' }); return; }
+  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL && !process.env.POSTGRES_PRISMA_URL) { res.status(500).json({ error: 'No database connection string set (DATABASE_URL or POSTGRES_URL)' }); return; }
 
   const { query } = body(req);
   if (!query || typeof query !== 'string') { res.status(400).json({ error: 'query required' }); return; }
