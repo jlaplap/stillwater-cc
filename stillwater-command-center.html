@@ -57,6 +57,7 @@
   nav.tabs button{flex:0 0 auto;background:transparent;border:none;padding:9px 16px;border-radius:10px;
     cursor:pointer;color:var(--ink2);font-weight:600}
   nav.tabs button.active{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
+  nav.tabs button .badge{display:inline-block;min-width:16px;height:16px;line-height:16px;padding:0 4px;margin-left:6px;border-radius:9px;background:var(--violet);color:#fff;font-size:10px;font-weight:800;text-align:center;vertical-align:middle}
   .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
   @media(max-width:1080px){.kpis{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:560px){.kpis{grid-template-columns:repeat(2,1fr)}}
@@ -194,7 +195,10 @@
       <input type="text" id="leadSearch" class="ctrl" placeholder="Search name / email / city…">
       <select id="leadStatusFilter" class="ctrl"><option value="">All statuses</option></select>
       <select id="leadSegFilter" class="ctrl"><option value="">All segments</option></select>
-      <label class="status" style="cursor:pointer"><input type="checkbox" id="unbatchedOnly"> un-batched only</label>
+      <select id="leadSourceFilter" class="ctrl"><option value="">All sources</option></select>
+      <select id="leadProvFilter" class="ctrl"><option value="">All provinces</option></select>
+      <label class="status" style="cursor:pointer"><input type="checkbox" id="unbatchedOnly"> available only</label>
+      <label class="status" style="cursor:pointer"><input type="checkbox" id="showDup"> show duplicates</label>
       <span style="flex:1"></span>
       <span class="muted" id="leadCount"></span>
       <button class="btn primary" id="makeBatchBtn">Create batch from selected</button>
@@ -294,7 +298,6 @@
 "use strict";
 /* ============ config ============ */
 const META = "mcp__2859ede8-9c7e-416b-8b4e-736c48aee4c7";
-const HS   = "mcp__d186346b-7230-4528-91c1-01ba7f42c5ad";
 const SUPA = "mcp__f10d0d44-9fb2-462e-ba4c-3ab63c0b1c06";
 const SUPA_PROJECT = "pqhejgzbmhhaxaraklgl";
 const AD_ACCOUNTS = [
@@ -303,15 +306,14 @@ const AD_ACCOUNTS = [
   {id:"2042313213255081", name:"GetInsuredBC 3"}
 ];
 const SEGMENTS = ["parents","self-employed","newcomers","trades","young-professionals","single-parents","seniors","55plus"];
-const HS_PROPS_FULL = ["firstname","lastname","email","phone","city","state","createdate","lifecyclestage","hs_lead_status","hs_latest_source","hs_analytics_source_data_1","hs_analytics_source_data_2"];
-const HS_PROPS_MIN  = ["firstname","lastname","email","phone","city","state","createdate","lifecyclestage","hs_lead_status","hs_latest_source"];
+// Addendum #3: leads come from Supabase (n8n intake), not HubSpot.
 
 /* ============ state ============ */
 const state = {
   leads:[], leadsTotal:0, ads:[], adsets:[], spendBySeg:{}, leadsBySeg:{},
-  conn:{meta:"off",hubspot:"off",supabase:"off"}, win:"last_30d", loaded:false
+  conn:{meta:"off",supabase:"off"}, win:"last_30d", loaded:false
 };
-let buyers=[], batches=[], invoices=[], routed={}, revSeg={};
+let buyers=[], batches=[], invoices=[], revSeg={};
 const store = {
   get(k,d){ try{const v=localStorage.getItem("sw_"+k);return v?JSON.parse(v):d;}catch(e){return d;} },
   set(k,v){ try{localStorage.setItem("sw_"+k,JSON.stringify(v));}catch(e){} }
@@ -365,6 +367,7 @@ function metaEntities(data){
 /* --- Supabase via execute_sql --- */
 function sqlLit(v){ return v==null?"null":"'"+String(v).replace(/'/g,"''")+"'"; }
 function sqlJson(o){ return "'"+JSON.stringify(o).replace(/'/g,"''")+"'::jsonb"; }
+function sqlArr(ids){ return "array["+ids.map(sqlLit).join(",")+"]::uuid[]"; }
 async function supa(sql){
   if(!window.cowork||!window.cowork.callMcpTool) throw new Error("no-cowork");
   const r=await window.cowork.callMcpTool(SUPA+"__execute_sql",{project_id:SUPA_PROJECT,query:sql});
@@ -381,31 +384,19 @@ const rpcRow = rows => (Array.isArray(rows)&&rows[0])?(rows[0].result||rows[0]):
 
 /* ============ data loads ============ */
 async function loadLeads(){
-  let res;
-  try{
-    res=await callTool(HS+"__search_crm_objects",{objectType:"contacts",limit:100,
-      sorts:[{propertyName:"createdate",direction:"DESCENDING"}], properties:HS_PROPS_FULL,
-      chatInsights:{userIntent:"View and route inbound insurance leads",satisfaction:"NEUTRAL"}});
-  }catch(e){
-    res=await callTool(HS+"__search_crm_objects",{objectType:"contacts",limit:100,
-      sorts:[{propertyName:"createdate",direction:"DESCENDING"}], properties:HS_PROPS_MIN,
-      chatInsights:{userIntent:"View and route inbound insurance leads",satisfaction:"NEUTRAL"}});
-  }
-  state.conn.hubspot="ok";
-  const rows=(res&&res.results)||[];
-  state.leadsTotal=(res&&res.total)||rows.length;
-  state.leads=rows.map(r=>{
-    const p=r.properties||{};
-    const name=[p.firstname,p.lastname].filter(Boolean).join(" ").trim()||p.hs_full_name_or_email||"(no name)";
-    const srcDetail=[p.hs_analytics_source_data_1,p.hs_analytics_source_data_2].filter(Boolean).join(" / ");
-    const seg=parseSegment(srcDetail)!=="—"?parseSegment(srcDetail):"—";
-    return {id:String(r.id||p.hs_object_id), name, email:p.email||"", phone:p.phone||"",
-      city:p.city||"", province:p.state||"", created:p.createdate||"",
-      segment:seg, source:p.hs_latest_source||p.hs_analytics_source||"—",
-      lifecycle:p.lifecyclestage||"", leadStatus:p.hs_lead_status||"" };
-  });
+  const rows=await supa("select id, source, segment, first_name, email, phone, city, province, qualified, consent_express, status, is_duplicate, created_at from leads where shelved_at is null order by created_at desc limit 500");
+  state.conn.supabase="ok";
+  state.leads=rows.map(r=>({
+    id:r.id, name:r.first_name||"(no name)", email:r.email||"", phone:r.phone||"",
+    city:r.city||"", province:r.province||"", created:r.created_at||"",
+    segment:r.segment||"—", source:r.source||"—",
+    qualified:r.qualified===true||r.qualified==="true",
+    consent:r.consent_express===true||r.consent_express==="true",
+    dup:r.is_duplicate===true||r.is_duplicate==="true",
+    status:r.status||"new" }));
+  state.leadsTotal=state.leads.length;
   state.leadsBySeg={};
-  state.leads.forEach(l=>{ if(l.segment&&l.segment!=="—") state.leadsBySeg[l.segment]=(state.leadsBySeg[l.segment]||0)+1; });
+  state.leads.forEach(l=>{ if(!l.dup&&l.segment&&l.segment!=="—") state.leadsBySeg[l.segment]=(state.leadsBySeg[l.segment]||0)+1; });
 }
 async function loadAds(){
   const win=state.win; const ads=[], adsets=[]; let anyOk=false;
@@ -436,8 +427,6 @@ async function loadStore(){
     buyers=await supa("select id,company,contact_name,email,phone,segments_wanted,provinces_wanted,coalesce(price_per_lead,0)::float as price_per_lead,notes,status,agreement_consent,agreement_timestamp,created_at from buyers order by created_at desc");
     batches=await supa("select b.id,b.name,b.buyer_id,coalesce(bu.company,'—') as buyer_company,b.segment_filter,b.exclusivity,b.lead_count,coalesce(b.total_price,0)::float as total_price,b.status,b.sent_at,b.created_at from batches b left join buyers bu on bu.id=b.buyer_id order by b.created_at desc");
     invoices=await supa("select i.id,i.batch_id,i.buyer_id,coalesce(i.amount,0)::float as amount,i.status,i.due_date,i.paid_at,i.created_at,coalesce(bu.company,'—') as buyer_company,coalesce(ba.name,'—') as batch_name from invoices i left join buyers bu on bu.id=i.buyer_id left join batches ba on ba.id=i.batch_id order by i.created_at desc");
-    const rr=await supa("select hubspot_contact_id,status from leads where hubspot_contact_id is not null");
-    routed={}; rr.forEach(r=>routed[r.hubspot_contact_id]=r.status);
     const rs=await supa("select l.segment, sum(bl.sale_price)::float as rev from invoices i join batches b on b.id=i.batch_id join batch_leads bl on bl.batch_id=b.id join leads l on l.id=bl.lead_id where i.status='paid' group by l.segment");
     revSeg={}; rs.forEach(r=>revSeg[r.segment]=r.rev);
     state.conn.supabase="ok";
@@ -447,9 +436,10 @@ async function loadStore(){
 /* ============ derived ============ */
 function totalSpend(){ return state.ads.reduce((s,a)=>s+a.spend,0); }
 function totalMetaLeads(){ return state.ads.reduce((s,a)=>s+a.leads,0); }
-function leadsToday(){ const d=new Date();d.setHours(0,0,0,0); return state.leads.filter(l=>new Date(l.created)>=d).length; }
-function leadsThisWeek(){ const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()); return state.leads.filter(l=>new Date(l.created)>=d).length; }
-function isQualified(l){ return /qualified/i.test(l.leadStatus)||/(marketingqualifiedlead|salesqualifiedlead|opportunity|customer)/i.test(l.lifecycle); }
+function leadsToday(){ const d=new Date();d.setHours(0,0,0,0); return state.leads.filter(l=>!l.dup&&new Date(l.created)>=d).length; }
+function leadsThisWeek(){ const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()); return state.leads.filter(l=>!l.dup&&new Date(l.created)>=d).length; }
+function newestLeadTs(){ return state.leads.reduce((m,l)=>Math.max(m,new Date(l.created).getTime()||0),0); }
+function isQualified(l){ return !!l.qualified; }
 function revenuePaid(){ return invoices.filter(i=>i.status==="paid").reduce((s,i)=>s+Number(i.amount||0),0); }
 function activeBuyers(){ return buyers.filter(b=>b.status==="active").length; }
 function buyerName(id){ const b=buyers.find(x=>x.id===id); return b?b.company:"—"; }
@@ -459,14 +449,14 @@ function winLabel(){ return {today:"today",last_7d:"7d",last_30d:"30d",this_mont
 function renderStatusPills(){
   const map={ok:["ok","live"],off:["off","offline"],warn:["warn","check"]};
   const pill=(n,st)=>`<span class="status"><span class="dot ${map[st][0]}"></span>${n} <span class="muted">${map[st][1]}</span></span>`;
-  $("#statusPills").innerHTML = pill("Meta",state.conn.meta)+pill("HubSpot",state.conn.hubspot)+pill("Supabase",state.conn.supabase)+
+  $("#statusPills").innerHTML = pill("Meta",state.conn.meta)+pill("Supabase",state.conn.supabase)+
     `<span class="status"><span class="dot off"></span>Stripe <span class="muted">v2</span></span>`;
 }
 function renderChannelPanel(){
   const rows=[
     ["Meta Marketing API",state.conn.meta,`${state.ads.length} creatives · ${state.adsets.length} ad sets`],
-    ["HubSpot CRM",state.conn.hubspot,`${state.leadsTotal} contacts`],
-    ["Supabase store",state.conn.supabase,`${buyers.length} buyers · ${batches.length} batches · ${invoices.length} invoices`],
+    ["Supabase (system of record)",state.conn.supabase,`${state.leads.filter(l=>!l.dup).length} leads · ${buyers.length} buyers · ${batches.length} batches`],
+    ["Lead intake (n8n → Resend)","ok","live · ingest_lead() · realtime on"],
     ["Stripe","off","Connect in full app for invoicing"]
   ];
   $("#channelPanel").innerHTML = rows.map(([n,st,meta])=>{
@@ -478,14 +468,15 @@ function renderChannelPanel(){
 }
 function renderKpis(){
   const spend=totalSpend(), rev=revenuePaid(), profit=rev-spend;
-  const qrate=state.leads.length?Math.round(state.leads.filter(isQualified).length/state.leads.length*100):0;
+  const nd=state.leads.filter(l=>!l.dup);
+  const qrate=nd.length?Math.round(nd.filter(isQualified).length/nd.length*100):0;
   const cards=[
     {label:"Leads today",val:leadsToday(),meta:leadsThisWeek()+" this week"},
     {label:"Active buyers",val:activeBuyers(),meta:buyers.length+" total"},
     {label:"Ad spend ("+winLabel()+")",val:cad(spend),meta:totalMetaLeads()+" Meta leads"},
     {label:"Revenue",val:cad(rev),meta:invoices.filter(i=>i.status==="paid").length+" paid"},
     {label:"Profit",val:cad(profit),meta:rev||spend?(profit>=0?"in the black":"in the red"):"—",cls:profit>=0?"good":"red"},
-    {label:"Qualified rate",val:qrate+"%",meta:state.leads.filter(isQualified).length+" / "+state.leads.length}
+    {label:"Qualified rate",val:qrate+"%",meta:nd.filter(isQualified).length+" / "+nd.length}
   ];
   $("#kpiStrip").innerHTML=cards.map(c=>`<div class="kpi ${c.cls||""}"><div class="label">${esc(c.label)}</div><div class="val">${esc(c.val)}</div><div class="meta">${esc(c.meta)}</div></div>`).join("");
 }
@@ -512,7 +503,7 @@ function renderCharts(){
 }
 function renderFeed(){
   const filter=$("#feedFilter").value; const items=[];
-  state.leads.slice(0,30).forEach(l=>items.push({ts:l.created,type:"lead",text:`New lead — <b>${esc(l.name)}</b>${l.segment!=="—"?" · "+esc(l.segment):""}${l.city?" · "+esc(l.city):""}`}));
+  state.leads.filter(l=>!l.dup).slice(0,30).forEach(l=>items.push({ts:l.created,type:"lead",text:`New lead — <b>${esc(l.name)}</b>${l.source!=="—"?" · "+esc(l.source):""}${l.segment!=="—"?" · "+esc(l.segment):""}`}));
   events.forEach(e=>items.push(e));
   const ico={lead:"lead",money:"money",ad:"ad",batch:"batch"}; const txt={lead:"●",money:"$",ad:"◆",batch:"▣"};
   const shown=items.filter(i=>filter==="all"||i.type===filter).sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,40);
@@ -521,40 +512,46 @@ function renderFeed(){
     :`<div class="empty"><div class="big">Nothing yet</div>New leads and actions show up here live.</div>`;
 }
 function leadRouting(l){
-  const st=routed[l.id];
-  if(st&&["batched","sent","sold"].includes(st)) return {label:st,cls:"sent",locked:true};
-  if(st==="refunded") return {label:"refunded",cls:"paused",locked:false};
-  return {label:"Un-batched",cls:"",locked:false};
+  if(["batched","sent","sold"].includes(l.status)) return {label:l.status,cls:"sent",locked:true};
+  if(l.status==="refunded") return {label:"refunded",cls:"paused",locked:false};
+  return {label:"available",cls:"",locked:false};
 }
 function renderLeads(){
   const q=($("#leadSearch").value||"").toLowerCase();
-  const sf=$("#leadStatusFilter").value, gf=$("#leadSegFilter").value, ub=$("#unbatchedOnly").checked;
+  const sf=$("#leadStatusFilter").value, gf=$("#leadSegFilter").value, gfSrc=$("#leadSourceFilter").value,
+        gfProv=$("#leadProvFilter").value, ub=$("#unbatchedOnly").checked, showDup=$("#showDup").checked;
+  const dupTotal=state.leads.filter(l=>l.dup).length;
   let rows=state.leads.filter(l=>{
-    if(q&&!(`${l.name} ${l.email} ${l.city} ${l.province}`.toLowerCase().includes(q)))return false;
+    if(!showDup&&l.dup)return false;
+    if(q&&!(`${l.name} ${l.email} ${l.city} ${l.province} ${l.source}`.toLowerCase().includes(q)))return false;
     if(gf&&l.segment!==gf)return false;
-    if(sf){ const s=isQualified(l)?"qualified":"new"; if(s!==sf)return false; }
+    if(gfSrc&&l.source!==gfSrc)return false;
+    if(gfProv&&l.province!==gfProv)return false;
+    if(sf&&l.status!==sf)return false;
     if(ub&&leadRouting(l).locked)return false;
     return true;
   });
-  $("#leadCount").textContent=`${rows.length} shown · ${state.leadsTotal} total in HubSpot`;
-  const segOpts=[...new Set(state.leads.map(l=>l.segment).filter(s=>s&&s!=="—"))];
-  $("#leadSegFilter").innerHTML=`<option value="">All segments</option>`+segOpts.map(s=>`<option ${gf===s?"selected":""}>${esc(s)}</option>`).join("");
-  if($("#leadStatusFilter").options.length<=1)$("#leadStatusFilter").innerHTML=`<option value="">All statuses</option><option value="new">New</option><option value="qualified">Qualified</option>`;
+  $("#leadCount").textContent=`${rows.length} shown · ${state.leads.filter(l=>!l.dup).length} routable${dupTotal?` · ${dupTotal} dup`:""}`;
+  const opts=(sel,vals)=>vals.map(s=>`<option ${sel===s?"selected":""}>${esc(s)}</option>`).join("");
+  $("#leadSegFilter").innerHTML=`<option value="">All segments</option>`+opts(gf,[...new Set(state.leads.map(l=>l.segment).filter(s=>s&&s!=="—"))]);
+  $("#leadSourceFilter").innerHTML=`<option value="">All sources</option>`+opts(gfSrc,[...new Set(state.leads.map(l=>l.source).filter(s=>s&&s!=="—"))]);
+  $("#leadProvFilter").innerHTML=`<option value="">All provinces</option>`+opts(gfProv,[...new Set(state.leads.map(l=>l.province).filter(Boolean))]);
+  $("#leadStatusFilter").innerHTML=`<option value="">All statuses</option>`+opts(sf,[...new Set(state.leads.map(l=>l.status).filter(Boolean))]);
   $("#leadsBody").innerHTML=rows.length?rows.map(l=>{
     const r=leadRouting(l), qual=isQualified(l);
-    return `<tr>
-      <td class="checkcol"><input type="checkbox" class="leadck" data-id="${l.id}" ${r.locked?"disabled":""}></td>
+    return `<tr${l.dup?' style="opacity:.55"':''}>
+      <td class="checkcol"><input type="checkbox" class="leadck" data-id="${l.id}" ${r.locked||l.dup?"disabled":""}></td>
       <td>${l.created?new Date(l.created).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"—"}<div class="ftime">${l.created?timeAgo(l.created):""}</div></td>
-      <td><b>${esc(l.name)}</b></td>
+      <td><b>${esc(l.name)}</b>${l.dup?' <span class="tag" style="color:var(--amber);border-color:transparent" title="duplicate — kept for the record, not routable">dup</span>':''}${l.consent?"":' <span class="tag" style="color:var(--amber);border-color:transparent" title="no CASL consent on record">no consent</span>'}</td>
       <td>${esc(l.email)||"<span class=muted>—</span>"}<div class="ftime">${esc(l.phone)}</div></td>
       <td>${esc(l.city||"—")}${l.province?", "+esc(l.province):""}</td>
       <td>${l.segment!=="—"?`<span class="tag seg">${esc(l.segment)}</span>`:"<span class=muted>—</span>"}</td>
-      <td><span class="muted">${esc(l.source)}</span></td>
+      <td>${l.source!=="—"?`<span class="tag">${esc(l.source)}</span>`:"<span class=muted>—</span>"}</td>
       <td><span class="tag ${qual?"active":"new"}">${qual?"qualified":"new"}</span></td>
       <td><span class="tag ${r.cls}">${esc(r.label)}</span></td>
     </tr>`;
   }).join("")
-    :`<tr><td colspan="9"><div class="empty"><div class="big">No leads match</div>${state.leadsTotal<=1?"Your funnel is pre-launch — leads stream in here the moment the quiz fires a HubSpot contact.":"Adjust filters to see more."}</div></td></tr>`;
+    :`<tr><td colspan="9"><div class="empty"><div class="big">No leads yet</div>${state.leadsTotal===0?"Intake is live. The first lead from a site form will appear here within seconds.":"Adjust filters to see more."}</div></td></tr>`;
 }
 function renderBuyers(){
   $("#buyersBody").innerHTML=buyers.length?buyers.map(b=>`<tr>
@@ -735,13 +732,14 @@ function batchForm(selIds){
     const unit=parseFloat($("#ba_price").value)||0; const excl=$("#ba_excl").value;
     const name=$("#ba_name").value.trim()||"Batch";
     const seg=Object.keys(segCounts).length===1?segGuess:"";
-    const leadsJson=sel.map(l=>({hubspot_contact_id:l.id,segment:l.segment==="—"?"unknown":l.segment,first_name:l.name,email:l.email,phone:l.phone,city:l.city,province:l.province,source:l.source}));
+    const leadIds=sel.map(l=>l.id);
     $("#ba_save").disabled=true;
     try{
-      const res=rpcRow(await supa(`select sw_create_batch(${sqlLit(buyer_id)}::uuid, ${sqlLit(name)}, ${sqlLit(excl)}, ${unit}, ${sqlLit(seg)}, ${sqlJson(leadsJson)}) as result`));
-      await loadStore(); closeModal(); renderBatches();renderLeads();renderChannelPanel();
+      const batchId=rpcRow(await supa(`select create_batch(${sqlLit(name)}, ${sqlLit(buyer_id)}::uuid, ${sqlLit(excl)}::exclusivity_t, ${unit}, ${sqlArr(leadIds)}) as result`));
+      if(seg&&typeof batchId==="string") await supa(`update batches set segment_filter=${sqlLit(seg)} where id=${sqlLit(batchId)}::uuid`);
+      await loadLeads(); await loadStore(); closeModal(); renderBatches();renderLeads();renderChannelPanel();renderKpis();
       logEvent("batch","Batch drafted — "+name+" → "+buyerName(buyer_id));
-      toast("Draft batch created ("+(res&&res.lead_count!=null?res.lead_count:sel.length)+" leads)");
+      toast("Draft batch created");
     }catch(e){ toast("Batch failed: "+(e.message||e)); $("#ba_save").disabled=false; }
   };
 }
@@ -759,7 +757,7 @@ function downloadCsv(name,text){ const blob=new Blob([text],{type:"text/csv;char
 async function sendBatch(id){
   try{
     const b=rpcRow(await supa(`select sw_send_batch(${sqlLit(id)}::uuid) as result`));
-    await loadStore(); renderBatches();renderLeads();renderKpis();
+    await loadLeads(); await loadStore(); renderBatches();renderLeads();renderKpis();
     const {csv,count}=await batchCsv(id);
     const bb=batches.find(x=>x.id===id)||b||{}; const fname=csvFilename(bb);
     logEvent("batch","Batch exported — "+(bb.name||"")+" ("+count+" leads) → "+buyerName(bb.buyer_id));
@@ -786,49 +784,33 @@ async function makeInvoice(id){
 }
 
 /* ============ one-time local import ============ */
-function localCounts(){ return {b:(store.get("buyers",[])||[]).length, x:(store.get("batches",[])||[]).length, i:(store.get("invoices",[])||[]).length}; }
 function maybeShowImport(){
-  const c=localCounts(); const el=$("#importBanner");
-  if(store.get("imported",false)||(c.b+c.x+c.i===0)||state.conn.supabase!=="ok"){ el.classList.add("hide"); return; }
+  const c=(store.get("buyers",[])||[]).length; const el=$("#importBanner");
+  if(store.get("imported",false)||c===0||state.conn.supabase!=="ok"){ el.classList.add("hide"); return; }
   el.classList.remove("hide");
-  el.innerHTML=`This browser has <b>${c.b} buyers</b>, <b>${c.x} batches</b>, <b>${c.i} invoices</b> saved locally from the previous version.
+  el.innerHTML=`This browser has <b>${c} buyers</b> saved locally from an earlier version.
     <span style="flex:1"></span>
-    <button class="btn sm primary" id="impGo">Import into Supabase</button>
+    <button class="btn sm primary" id="impGo">Import buyers into Supabase</button>
     <button class="btn sm ghost" id="impSkip">Dismiss</button>`;
   $("#impSkip").onclick=()=>{store.set("imported",true);el.classList.add("hide");};
   $("#impGo").onclick=runImport;
 }
 async function runImport(){
-  const lb=store.get("buyers",[])||[], lx=store.get("batches",[])||[], li=store.get("invoices",[])||[];
-  $("#importBanner").innerHTML=`<div class="loadingbar" style="flex:1"></div> Importing local data into Supabase…`;
-  const buyerMap={}; // oldId -> newId
+  // Buyers only: old local batches/invoices referenced the pre-Supabase lead model and aren't migrated.
+  const lb=store.get("buyers",[])||[];
+  $("#importBanner").innerHTML=`<div class="loadingbar" style="flex:1"></div> Importing buyers into Supabase…`;
   try{
     for(const b of lb){
       const p={company:b.company,contact_name:b.contact_name,email:b.email||"",phone:b.phone,
-        segments_wanted:b.segments_wanted||[],provinces_wanted:b.provinces_wanted||[],price_per_lead:b.price_per_lead,notes:b.notes,status:b.status||"pending"};
-      const nb=rpcRow(await supa(`select sw_upsert_buyer(${sqlJson(p)}) as result`));
-      if(nb&&nb.id&&b.id)buyerMap[b.id]=nb.id;
-    }
-    const batchMap={}; // oldBatchId -> newBatch
-    for(const x of lx){
-      const buyerId=buyerMap[x.buyer_id]; if(!buyerId)continue;
-      const leadsJson=(x.lead_snapshots||[]).map(l=>({hubspot_contact_id:l.id,segment:l.segment==="—"?"unknown":l.segment,first_name:l.name,email:l.email,phone:l.phone,city:l.city,province:l.province,source:l.source}));
-      const nb=rpcRow(await supa(`select sw_create_batch(${sqlLit(buyerId)}::uuid, ${sqlLit(x.name||"Imported batch")}, ${sqlLit(x.exclusivity||"exclusive")}, ${Number(x.unit_price)||0}, ${sqlLit(x.segment_filter||"")}, ${sqlJson(leadsJson)}) as result`));
-      if(nb&&nb.id){ batchMap[x.id]={id:nb.id,status:x.status};
-        if(["sent","invoiced","paid"].includes(x.status)) await supa(`select sw_send_batch(${sqlLit(nb.id)}::uuid) as result`);
-      }
-    }
-    for(const inv of li){
-      const nb=batchMap[inv.batch_id]; if(!nb)continue;
-      const ni=rpcRow(await supa(`select sw_create_invoice(${sqlLit(nb.id)}::uuid, null) as result`));
-      if(ni&&ni.id){ if(inv.status==="paid") await supa(`select sw_mark_invoice_paid(${sqlLit(ni.id)}::uuid) as result`);
-        else if(inv.status==="void") await supa(`select sw_void_invoice(${sqlLit(ni.id)}::uuid) as result`); }
+        segments_wanted:b.segments_wanted||[],provinces_wanted:b.provinces_wanted||[],
+        price_per_lead:b.price_per_lead,notes:b.notes,status:b.status==="paused"?"paused":"active"};
+      await supa(`select sw_upsert_buyer(${sqlJson(p)}) as result`);
     }
     store.set("imported",true);
     await loadStore(); renderAll();
     $("#importBanner").classList.add("hide");
-    toast("Imported "+lb.length+" buyers, "+lx.length+" batches, "+li.length+" invoices");
-    logEvent("batch","Imported local data into Supabase");
+    toast("Imported "+lb.length+" buyers");
+    logEvent("batch","Imported local buyers into Supabase");
   }catch(e){ toast("Import error: "+(e.message||e)); maybeShowImport(); }
 }
 
@@ -837,14 +819,15 @@ function bindStatic(){
   $("#tabs").onclick=e=>{const btn=e.target.closest("button[data-tab]");if(!btn)return;
     $$("#tabs button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");
     $$("section[id^=tab-]").forEach(s=>s.classList.add("hide"));$("#tab-"+btn.dataset.tab).classList.remove("hide");
-    if(btn.dataset.tab==="dashboard")setTimeout(renderCharts,30);};
+    if(btn.dataset.tab==="dashboard")setTimeout(renderCharts,30);
+    if(btn.dataset.tab==="leads"){ state.lastSeenLead=newestLeadTs(); updateLeadBadge(); }};
   $("#windowSel").value=state.win;
   $("#windowSel").onchange=async e=>{state.win=e.target.value;setBusy(true);await loadAds();setBusy(false);renderAll();};
   applyTheme(store.get("theme","light"));
   $("#themeBtn").onclick=()=>{const t=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";applyTheme(t);store.set("theme",t);renderCharts();};
   $("#feedFilter").onchange=renderFeed;
-  ["#leadSearch","#leadStatusFilter","#leadSegFilter"].forEach(s=>{$(s).oninput=renderLeads;$(s).onchange=renderLeads;});
-  $("#unbatchedOnly").onchange=renderLeads;
+  ["#leadSearch","#leadStatusFilter","#leadSegFilter","#leadSourceFilter","#leadProvFilter"].forEach(s=>{$(s).oninput=renderLeads;$(s).onchange=renderLeads;});
+  $("#unbatchedOnly").onchange=renderLeads; $("#showDup").onchange=renderLeads;
   $("#leadAll").onchange=e=>{$$(".leadck:not(:disabled)").forEach(c=>c.checked=e.target.checked);};
   $("#makeBatchBtn").onclick=()=>{const ids=$$(".leadck:checked").map(c=>c.dataset.id);batchForm(ids);};
   $("#batchBody").onclick=e=>{const s=e.target.closest("[data-send]"),i=e.target.closest("[data-invoice]"),c=e.target.closest("[data-csv]");
@@ -861,8 +844,8 @@ function bindStatic(){
   };
   $("#invBody").onclick=async e=>{const p=e.target.closest("[data-pay]"),v=e.target.closest("[data-void]");
     try{
-      if(p){const inv=rpcRow(await supa(`select sw_mark_invoice_paid(${sqlLit(p.dataset.pay)}::uuid) as result`));await loadStore();renderMoney();renderKpis();renderBatches();renderChannelPanel();logEvent("money","Invoice paid — "+cad(inv&&inv.amount));toast("Marked paid");}
-      if(v){if(confirm("Void / refund this invoice? Its leads are released for resale.")){await supa(`select sw_void_invoice(${sqlLit(v.dataset.void)}::uuid) as result`);await loadStore();renderMoney();renderKpis();renderLeads();renderBatches();logEvent("money","Invoice voided / refunded");toast("Voided");}}
+      if(p){const inv=rpcRow(await supa(`select sw_mark_invoice_paid(${sqlLit(p.dataset.pay)}::uuid) as result`));await loadLeads();await loadStore();renderMoney();renderKpis();renderBatches();renderChannelPanel();logEvent("money","Invoice paid — "+cad(inv&&inv.amount));toast("Marked paid");}
+      if(v){if(confirm("Void / refund this invoice? Its leads are released for resale.")){await supa(`select sw_void_invoice(${sqlLit(v.dataset.void)}::uuid) as result`);await loadLeads();await loadStore();renderMoney();renderKpis();renderLeads();renderBatches();logEvent("money","Invoice voided / refunded");toast("Voided");}}
     }catch(err){ toast("Failed: "+(err.message||err)); }
   };
   $("#refreshAdsBtn").onclick=async()=>{setBusy(true);await loadAds();setBusy(false);renderAll();toast("Ads refreshed");};
@@ -870,24 +853,41 @@ function bindStatic(){
   bindAdActions();
 }
 function setBusy(b){ let el=$("#ctxBanner");
-  if(b){el.classList.remove("hide");el.innerHTML='<div class="loadingbar" style="flex:1"></div>Loading live data from Meta, HubSpot &amp; Supabase…';}
+  if(b){el.classList.remove("hide");el.innerHTML='<div class="loadingbar" style="flex:1"></div>Loading live data from Meta &amp; Supabase…';}
   else if(el.dataset.sticky!=="1"){el.classList.add("hide");} }
 function applyTheme(t){ document.documentElement.setAttribute("data-theme",t); }
+
+function updateLeadBadge(){
+  const newest=newestLeadTs();
+  if(state.lastSeenLead==null) state.lastSeenLead=newest;
+  const unread=state.leads.filter(l=>!l.dup&&(new Date(l.created).getTime()||0)>state.lastSeenLead).length;
+  const btn=document.querySelector('#tabs button[data-tab="leads"]'); if(!btn)return;
+  let b=btn.querySelector(".badge");
+  if(unread>0){ if(!b){b=document.createElement("span");b.className="badge";btn.appendChild(b);} b.textContent=unread>99?"99+":unread; }
+  else if(b){ b.remove(); }
+}
+async function pollLeads(){
+  if(!window.cowork||!window.cowork.callMcpTool||state.conn.supabase!=="ok") return;
+  try{ await loadLeads(); }catch(e){ return; }
+  updateLeadBadge(); renderFeed(); renderKpis(); renderChannelPanel();
+  if(!$("#tab-leads").classList.contains("hide")) renderLeads();
+}
 
 /* ============ boot ============ */
 async function boot(){
   bindStatic(); renderAll();
   if(!window.cowork||!window.cowork.callMcpTool){
     const el=$("#ctxBanner");el.dataset.sticky="1";el.classList.remove("hide");
-    el.textContent="Open this view inside Cowork to load live data (HubSpot, Meta, Supabase).";
+    el.textContent="Open this view inside Cowork to load live data (Meta, Supabase).";
     return;
   }
   setBusy(true);
   const r=await Promise.allSettled([loadLeads(),loadAds(),loadStore()]);
   setBusy(false); state.loaded=true; renderAll(); maybeShowImport();
+  state.lastSeenLead=newestLeadTs(); updateLeadBadge(); setInterval(pollLeads,25000);
   const failed=r.filter(x=>x.status==="rejected");
   if(state.conn.supabase!=="ok"){ const el=$("#ctxBanner");el.dataset.sticky="1";el.classList.remove("hide");
-    el.innerHTML="Supabase store unreachable — buyers/batches/invoices won't load. Meta &amp; HubSpot still live."; }
+    el.innerHTML="Supabase unreachable — leads, buyers, batches and invoices won't load. Meta still live."; }
 }
 boot();
 </script>

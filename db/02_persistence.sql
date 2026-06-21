@@ -47,44 +47,64 @@ begin
   return to_jsonb(v);
 end $$;
 
--- ---------- batches ----------
--- Materializes HubSpot leads into the leads table, then creates the batch.
--- uq_lead_single_batch is the DB-level double-sell guard: a lead already in any
--- batch is silently skipped (exclusive single-sale).
-create or replace function sw_create_batch(
-  p_buyer uuid, p_name text, p_excl text, p_unit numeric, p_segment text, p_leads jsonb)
+-- ---------- lead intake + batches (Addendum #3) ----------
+-- Leads arrive via n8n intake (ingest_lead), not HubSpot. create_batch just links
+-- existing lead ids. uq_lead_single_batch is the DB-level double-sell guard.
+
+-- ingest_lead is OWNED + DEPLOYED by the n8n intake pipeline (Addendum #4). The definition
+-- below mirrors the LIVE function in the stillwater-cc DB (source of truth). The console only
+-- READS the leads it writes. It inserts every consented lead and FLAGS dupes (is_duplicate),
+-- keeping them for the record rather than rejecting. Do NOT re-apply over the live function
+-- without coordinating with the intake pipeline. Bot protection (secret/honeypot/captcha) is in n8n.
+create or replace function ingest_lead(p jsonb)
 returns jsonb language plpgsql security definer set search_path = public as $$
-declare
-  v_batch batches; v_item jsonb; v_lead_id uuid; v_count int := 0; v_excl exclusivity_t := p_excl::exclusivity_t;
+declare v_id uuid; v_dupe boolean; v_key text;
 begin
-  insert into batches(name,buyer_id,segment_filter,exclusivity,status,lead_count,total_price)
-  values (p_name, p_buyer, nullif(p_segment,''), v_excl, 'draft', 0, 0)
-  returning * into v_batch;
+  if coalesce((p->>'consent_express')::boolean,false) is not true then
+    raise exception 'consent_required';
+  end if;
+  v_key := lower(coalesce(p->>'email','')) || '|' || regexp_replace(coalesce(p->>'phone',''), '\D', '', 'g');
+  select exists(
+    select 1 from public.leads where dedupe_key = v_key and created_at > now() - interval '30 days'
+  ) into v_dupe;
+  insert into public.leads(
+    source, segment, lp_url,
+    utm_source, utm_medium, utm_campaign, utm_content, utm_term, campaign_id,
+    province, city, qualified, qualification_payload,
+    first_name, email, phone,
+    consent_express, consent_timestamp, consent_ip,
+    status, exclusivity, dedupe_key, is_duplicate)
+  values(
+    p->>'source', coalesce(nullif(p->>'segment',''),'unknown'), p->>'lp_url',
+    p->>'utm_source', p->>'utm_medium', p->>'utm_campaign', p->>'utm_content', p->>'utm_term', p->>'campaign_id',
+    p->>'province', p->>'city', coalesce((p->>'qualified')::boolean,false), p->'qualification',
+    p->>'first_name', p->>'email', p->>'phone',
+    true, coalesce((p->>'consent_timestamp')::timestamptz, now()), p->>'consent_ip',
+    'new', 'exclusive', v_key, v_dupe)
+  returning id into v_id;
+  return jsonb_build_object('lead_id', v_id, 'duplicate', v_dupe);
+end $$;
 
-  for v_item in select value from jsonb_array_elements(coalesce(p_leads,'[]'::jsonb))
-  loop
-    insert into leads(hubspot_contact_id,segment,first_name,email,phone,city,province,utm_source,status,exclusivity,dedupe_key)
-    values (
-      nullif(v_item->>'hubspot_contact_id',''),
-      coalesce(nullif(v_item->>'segment',''),'unknown'),
-      v_item->>'first_name', v_item->>'email', v_item->>'phone',
-      v_item->>'city', v_item->>'province', v_item->>'source',
-      'new', v_excl,
-      lower(coalesce(v_item->>'email',''))||'|'||regexp_replace(coalesce(v_item->>'phone',''),'\D','','g'))
-    on conflict (hubspot_contact_id) do update set segment = excluded.segment, updated_at = now()
-    returning id into v_lead_id;
-
-    begin
-      insert into batch_leads(batch_id,lead_id,sale_price) values (v_batch.id, v_lead_id, p_unit);
-      update leads set status = 'batched' where id = v_lead_id and status in ('new','qualified');
+create or replace function create_batch(
+  p_name text, p_buyer uuid, p_exclusivity exclusivity_t, p_unit_price numeric, p_lead_ids uuid[])
+returns uuid language plpgsql security definer set search_path = public as $$
+declare v_batch uuid; v_count int := 0; lid uuid;
+begin
+  insert into batches(name, buyer_id, exclusivity, status)
+    values (p_name, p_buyer, p_exclusivity, 'draft') returning id into v_batch;
+  foreach lid in array coalesce(p_lead_ids, '{}') loop
+    insert into batch_leads(batch_id, lead_id, sale_price)
+      values (v_batch, lid, p_unit_price)
+      on conflict (lead_id) do nothing;     -- a lead already in a batch is skipped
+    if found then
+      update leads set status='batched' where id=lid and status in ('new','qualified');
       v_count := v_count + 1;
-    exception when unique_violation then null; -- lead already in a batch: skip
-    end;
+    end if;
   end loop;
-
-  update batches set lead_count = v_count, total_price = v_count * p_unit where id = v_batch.id returning * into v_batch;
-  insert into audit_log(entity,entity_id,action,payload) values ('batch', v_batch.id, 'created', to_jsonb(v_batch));
-  return to_jsonb(v_batch);
+  update batches set lead_count=v_count, total_price=v_count*coalesce(p_unit_price,0) where id=v_batch;
+  insert into audit_log(entity,entity_id,action,payload)
+    values ('batch', v_batch, 'created', jsonb_build_object('lead_count',v_count,'unit_price',p_unit_price));
+  return v_batch;
 end $$;
 
 create or replace function sw_send_batch(p_batch uuid)

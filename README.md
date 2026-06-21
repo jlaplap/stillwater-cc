@@ -1,19 +1,21 @@
 # Stillwater Command Center
 
 A single-operator command center for the GetInsuredBC paid lead-generation business:
-Meta ads → segmented landing pages → HubSpot leads → batch-routed to buyers → invoiced, with a
-live money-in/money-out view and one-screen control of ad creatives.
+Meta ads → segmented landing pages → n8n intake → **Supabase** leads → batch-routed to buyers →
+invoiced, with a live money-in/money-out view and one-screen control of ad creatives.
 
 This repo holds the **v1 live artifact** — a single self-contained `index.html` that runs inside
-Cowork, reads real connector data (HubSpot + Meta), performs real ad actions (kill / scale), and
-persists the operating store (buyers, batches, invoices, lead routing) in **Supabase**.
+Cowork, reads real data (Supabase leads/store + Meta ads), performs real ad actions (kill / scale),
+and uses **Supabase as the system of record** for leads, buyers, batches, and invoices.
 
 ## What's live
 
 - **Dashboard** — KPI strip (leads today/week, active buyers, ad spend, revenue, profit, qualified
   rate), leads-vs-spend activity chart, spend-by-segment, live feed, channel-status panel.
-- **Leads** — live HubSpot inbox (search / segment / status filters); select rows → create a batch.
-  Routing state (batched / sent / sold) comes from Supabase.
+- **Leads** — Supabase `leads` inbox (search + segment / source / province / status filters).
+  Duplicates (`is_duplicate`) are flagged and hidden from the routable view (toggle to show). The
+  MCP-bridge console polls every ~25s with an unread badge; the Next.js build subscribes to realtime.
+  Select rows → create a batch; status (available / batched / sent / sold) is the lead's real column.
 - **Buyers** — persisted in Supabase, added directly as **active** (no public form / approval).
   Activate-pause-edit, per-buyer per-lead pricing, and a **CASL agreement** flag Joel ticks when a
   buyer agrees (out of band) to honor consent.
@@ -34,14 +36,35 @@ Run the SQL in order:
 
 Key guarantees enforced in the DB, not the UI:
 
+- **Intake** — leads enter via `ingest_lead(jsonb)` (the n8n contract): CASL **consent gate** +
+  **dedup**; `source` tags the originating site for multi-brand (getinsuredbc, willkitcanada, ...).
 - **Exclusive single-sale** — `batch_leads.uq_lead_single_batch` makes it impossible to put a lead in
-  two batches; `sw_create_batch` skips any lead already routed.
+  two batches; `create_batch(uuid[])` links existing leads and skips any already routed.
 - **Dedup** — leads carry a normalized `dedupe_key` (`lower(email)|digits(phone)`).
 - **Per-segment attribution** — `utm_content` = ad id, `utm_term` = ad-set id; `pnl_by_segment_daily`
   joins spend to revenue by segment.
 
 The Command Center talks to Supabase only through the **service connection** (Cowork's `execute_sql`),
 never the public anon key — so no keys reach the browser and the mutating RPCs aren't client-callable.
+
+## Live intake (Addendum #4)
+
+Leads are produced by a **deployed n8n pipeline**, not this console. The two systems meet at exactly
+one place: the `public.leads` table in `stillwater-cc`.
+
+```
+Ads -> LP form -> n8n webhook (X-Intake-Key) -> ingest_lead() -> leads(status='new') -> Resend ping
+                                                       |
+                                          Command Center reads here
+```
+
+- Intake webhook: `https://calm-tiger-18.ash-1.instapods.app/webhook/lead-intake` (site forms POST
+  with the `X-Intake-Key` header; the console never calls it).
+- `ingest_lead()` runs the CASL consent gate + dedup and is **owned by the pipeline** (see the note in
+  `db/02_persistence.sql`). The console is a pure consumer + operator of leads.
+- `leads` is on the `supabase_realtime` publication for the future realtime path.
+- getinsuredbc's own Supabase (`ayzxnmftmzlzrqkmiebq`) is a *source*, not the CRM — don't point the
+  console at it.
 
 ## Operating rules baked in
 
@@ -60,8 +83,8 @@ are the CASL proof of opt-in and are always included.
 
 - **Stripe** isn't connected yet, so invoices are created and marked paid in-app (revenue = what's
   marked paid). Wiring Stripe (auto-create + `invoice.paid` webhook) is the next step.
-- Consent columns (`consent_*`) are populated by the quiz → HubSpot → Supabase lead capture, which is
-  a separate workstream; until it's live those columns export blank.
+- Consent columns (`consent_*`) are populated by the quiz → n8n intake (`ingest_lead`) → Supabase
+  capture, which is a separate workstream; until it's live the `leads` table is empty.
 - RLS uses permissive `USING (true)` policies for `authenticated` (single-operator design). Tighten
   to per-user policies when a real multi-user / buyer-portal phase arrives.
 
@@ -74,4 +97,4 @@ RPCs and leaves localStorage intact as a backup.
 ## Usage
 
 Open `index.html` inside Cowork (registered as the `stillwater-command-center` artifact). Outside
-Cowork the page renders but live HubSpot/Meta/Supabase data and actions require the Cowork bridge.
+Cowork the page renders but live Supabase/Meta data and actions require the Cowork bridge.

@@ -46,7 +46,8 @@ create trigger trg_buyers_updated before update on buyers
 -- =========================================================
 create table leads (
   id                   uuid primary key default gen_random_uuid(),
-  hubspot_contact_id   text unique,
+  source               text,            -- Addendum #3: which site/brand (getinsuredbc, willkitcanada, ...)
+  hubspot_contact_id   text unique,     -- Addendum #3: vestigial, nullable, unused going forward
   segment              text not null,
   lp_url               text,
   utm_source           text,
@@ -68,6 +69,7 @@ create table leads (
   status               lead_status not null default 'new',
   exclusivity          exclusivity_t not null default 'exclusive',
   dedupe_key           text,    -- lower(email)|digits(phone)
+  is_duplicate         boolean default false,   -- Addendum #4: set by intake; kept for record, not routable
   shelved_at           timestamptz,
   created_at           timestamptz not null default now(),
   updated_at           timestamptz not null default now()
@@ -79,6 +81,7 @@ create index idx_leads_status     on leads(status);
 create index idx_leads_created     on leads(created_at desc);
 create index idx_leads_dedupe      on leads(dedupe_key);
 create index idx_leads_utm_content on leads(utm_content);
+create index idx_leads_source      on leads(source);
 create index idx_leads_available on leads(status) where shelved_at is null;
 
 -- =========================================================
