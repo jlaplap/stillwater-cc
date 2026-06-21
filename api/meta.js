@@ -97,7 +97,12 @@ module.exports = async (req, res) => {
       { level, date_preset: datePreset, limit: '500', access_token: token }
     );
     let insightsRows = [];
-    try { insightsRows = await graphGetAll(insightsUrl); } catch (_) { /* no insights = zeros */ }
+    try {
+      insightsRows = await graphGetAll(insightsUrl);
+      console.log('[api/meta]', acctId, level, datePreset, '→ entities:', entities.length, 'insights:', insightsRows.length);
+    } catch (insErr) {
+      console.error('[api/meta] insights error', acctId, insErr.message);
+    }
 
     // Index insights by entity ID for O(1) lookup.
     const insMap = {};
