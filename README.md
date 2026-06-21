@@ -24,6 +24,11 @@ and uses **Supabase as the system of record** for leads, buyers, batches, and in
   flagged. CPL / leads come from Meta `results`.
 - **Money** — P&L by segment (live Meta spend vs. Supabase invoice revenue) and an invoice list with
   mark-paid and void/refund.
+- **CRM records** — every record opens a right-side detail panel with inline click-to-edit fields and an
+  **Activity** timeline (log calls / emails / meetings / SMS / notes, merged with system events). Quiz
+  answers land in a lead's Notes. Table columns are click-to-sort; Leads support checkbox + Shift/Cmd-click
+  multi-select, "select first N", and XLS export. Tasks are a drag-and-drop board (To do / In progress /
+  Done) with per-column quick-add. Activity-log schema lives in `db/04_crm_workspace.sql`.
 
 ## Data store (Supabase)
 
@@ -96,5 +101,45 @@ RPCs and leaves localStorage intact as a backup.
 
 ## Usage
 
-Open `index.html` inside Cowork (registered as the `stillwater-command-center` artifact). Outside
-Cowork the page renders but live Supabase/Meta data and actions require the Cowork bridge.
+Open `index.html` inside Cowork (registered as the `stillwater-command-center` artifact) for the
+bridge-backed dev build. On the web (Vercel) build the same page talks to Supabase through the API
+routes below, behind a password.
+
+## Deploy to Vercel
+
+The page is **dual-mode**. It auto-detects its environment: inside Cowork it uses the data bridge; on
+the open web it routes every data call to serverless API routes in `/api`. No code change needed
+between the two.
+
+### How it works on the web
+
+- `index.html` is served statically at `/`.
+- `/api/login` — exchanges `CC_PASSWORD` for a signed session token (stored in `sessionStorage`).
+- `/api/sql` — runs the console's SQL against Supabase Postgres via `DATABASE_URL` (the `pg` pool),
+  **only** when the request carries a valid token. This is the single data path for leads, buyers,
+  the CRM (`cc_*`), tasks, distributions, invoices, etc.
+- `/api/meta` — Meta Ads proxy. Returns empty (`not_configured`) until `META_ACCESS_TOKEN` is set, so
+  the Ads view degrades gracefully instead of erroring. (Full Graph API proxy is a follow-up.)
+
+### Steps
+
+1. Import this repo into Vercel (Framework preset: **Other** — it's static + `/api`).
+2. Add the environment variables from `.env.example`:
+   - `DATABASE_URL` — Supabase → Project Settings → Database → Connection string → **Transaction** pooler.
+   - `CC_PASSWORD` — the password you'll type to sign in.
+   - `SESSION_SECRET` — a long random string (`openssl rand -hex 32`).
+   - `META_ACCESS_TOKEN` *(optional)* — enables live Ads later.
+3. Deploy. Open the URL, enter `CC_PASSWORD`, and the console loads live data.
+
+### Security
+
+`/api/sql` executes arbitrary SQL when authenticated — this is a single-operator tool. Keep the
+deployment behind the password (and ideally Vercel **Deployment Protection**). `DATABASE_URL`,
+`CC_PASSWORD`, and `SESSION_SECRET` live only in Vercel env vars, never in the client bundle. RLS on
+`cc_*` / `leads` stays permissive for now; tighten to per-user policies for a multi-user phase.
+
+## Migrating from the previous (localStorage) version
+
+The artifact shows a one-time, non-destructive **"Import this browser's data"** banner if it finds
+buyers / batches / invoices saved locally from the pre-Supabase build. It recreates them through the
+RPCs and leaves localStorage intact as a backup.

@@ -1,4 +1,5 @@
 .DS_Store
 node_modules/
 _check.js
-_cc_artifact_copy.html
+.env
+.env*.local
