@@ -97,11 +97,13 @@ module.exports = async (req, res) => {
       { level, date_preset: datePreset, limit: '500', access_token: token }
     );
     let insightsRows = [];
+    let insightsError = null;
     try {
       insightsRows = await graphGetAll(insightsUrl);
-      console.log('[api/meta]', acctId, level, datePreset, '→ entities:', entities.length, 'insights:', insightsRows.length);
+      console.error('[api/meta] OK', acctId, level, datePreset, 'entities:', entities.length, 'insights:', insightsRows.length);
     } catch (insErr) {
-      console.error('[api/meta] insights error', acctId, insErr.message);
+      insightsError = insErr.message || String(insErr);
+      console.error('[api/meta] insights error', acctId, insightsError);
     }
 
     // Index insights by entity ID for O(1) lookup.
@@ -126,7 +128,10 @@ module.exports = async (req, res) => {
       };
     });
 
-    res.status(200).json({ ad_entities });
+    res.status(200).json({
+      ad_entities,
+      _debug: { entities: entities.length, insights: insightsRows.length, insights_error: insightsError },
+    });
   } catch (e) {
     console.error('[api/meta]', e.message || e);
     res.status(200).json({
