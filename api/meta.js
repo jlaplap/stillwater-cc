@@ -2,12 +2,16 @@
 // Proxies to the Meta Graph API. Requires META_ACCESS_TOKEN in Vercel env vars.
 // Returns entities in the shape: {id, name, status, spend, impressions, clicks, cpc, ctr, reach}.
 // Cowork mode uses the MCP bridge directly; this route is only hit in web (Vercel) mode.
+//
+// Two-step approach: fetch entity attributes then insights separately and merge by ID.
+// This avoids URLSearchParams encoding {} and () in the inline field expansion syntax,
+// which causes the Graph API to silently drop insights from the response.
 const https = require('https');
 const { authed, body } = require('./_auth');
 
 const GRAPH_VER = 'v21.0';
 
-// Simple HTTPS GET → parsed JSON (no npm deps needed).
+// Simple HTTPS GET → parsed JSON. URL is passed as-is (no re-encoding by Node https).
 function graphGet(url) {
   return new Promise((resolve, reject) => {
     https.get(url, (res) => {
@@ -21,7 +25,7 @@ function graphGet(url) {
   });
 }
 
-// Follow pagination cursors, collect all results (up to 10 pages).
+// Follow paging.next cursors, collect all results (up to 10 pages).
 async function graphGetAll(url) {
   const out = [];
   let next = url;
@@ -32,6 +36,13 @@ async function graphGetAll(url) {
     next = data.paging && data.paging.next ? data.paging.next : null;
   }
   return out;
+}
+
+// Build a safe query string: most params URL-encoded, `fields` left unencoded so that
+// Graph API field expansion syntax ( . () {} , ) is preserved and not percent-escaped.
+function buildUrl(base, fields, extra) {
+  const enc = Object.entries(extra).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+  return `${base}?fields=${fields}&${enc}`;
 }
 
 module.exports = async (req, res) => {
@@ -50,28 +61,53 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Account IDs are stored as bare numerics in the app; Graph API needs the act_ prefix.
+  // Account IDs stored as bare numerics in the app; Graph API needs the act_ prefix.
   const acctId = String(args.ad_account_id).startsWith('act_')
     ? args.ad_account_id
     : 'act_' + args.ad_account_id;
 
-  const level = args.level || 'campaign';
-  // campaign→campaigns, adset→adsets, ad→ads
+  const level      = args.level || 'campaign';
   const levelPlural = level === 'adset' ? 'adsets' : level + 's';
   const datePreset = args.date_preset || 'last_30d';
 
-  // Fetch entity attributes + inline insights in one call.
-  const insightFields = 'spend,impressions,clicks,cpc,ctr,reach';
-  const fields = `id,name,status,insights.date_preset(${datePreset}){${insightFields}}`;
-
-  const params = new URLSearchParams({ fields, limit: '200', access_token: token });
-  const url = `https://graph.facebook.com/${GRAPH_VER}/${acctId}/${levelPlural}?${params}`;
+  // ID field name in insights rows differs by level.
+  const insightIdKey = level === 'campaign' ? 'campaign_id'
+                     : level === 'adset'    ? 'adset_id'
+                     : 'ad_id';
 
   try {
-    const entities = await graphGetAll(url);
+    // Step 1: entity attributes (id, name, status) — simple fields, safe to encode normally.
+    const entityUrl = buildUrl(
+      `https://graph.facebook.com/${GRAPH_VER}/${acctId}/${levelPlural}`,
+      'id,name,status',
+      { limit: '200', access_token: token }
+    );
+    const entities = await graphGetAll(entityUrl);
+
+    if (entities.length === 0) {
+      res.status(200).json({ ad_entities: [] });
+      return;
+    }
+
+    // Step 2: insights via the dedicated /insights endpoint — no field expansion needed.
+    const insightFields = 'spend,impressions,clicks,cpc,ctr,reach,' + insightIdKey;
+    const insightsUrl = buildUrl(
+      `https://graph.facebook.com/${GRAPH_VER}/${acctId}/insights`,
+      insightFields,
+      { level, date_preset: datePreset, limit: '500', access_token: token }
+    );
+    let insightsRows = [];
+    try { insightsRows = await graphGetAll(insightsUrl); } catch (_) { /* no insights = zeros */ }
+
+    // Index insights by entity ID for O(1) lookup.
+    const insMap = {};
+    for (const row of insightsRows) {
+      const id = row[insightIdKey];
+      if (id) insMap[id] = row;
+    }
 
     const ad_entities = entities.map(e => {
-      const ins = (e.insights && e.insights.data && e.insights.data[0]) || {};
+      const ins = insMap[e.id] || {};
       return {
         id:          e.id,
         name:        e.name,
@@ -87,7 +123,7 @@ module.exports = async (req, res) => {
 
     res.status(200).json({ ad_entities });
   } catch (e) {
-    // Degrade gracefully: surface the error message but still return a valid shape.
+    console.error('[api/meta]', e.message || e);
     res.status(200).json({
       ad_entities: [],
       error: 'Meta API error: ' + (e && e.message ? e.message : String(e)),
