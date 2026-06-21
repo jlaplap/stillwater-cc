@@ -9,7 +9,7 @@ let pool;
 function getPool() {
   if (!pool) {
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL,
       ssl: { rejectUnauthorized: false },
       max: 3,
       idleTimeoutMillis: 10000,
@@ -21,7 +21,7 @@ function getPool() {
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
   if (!authed(req)) { res.status(401).json({ error: 'unauthorized' }); return; }
-  if (!process.env.DATABASE_URL) { res.status(500).json({ error: 'DATABASE_URL not set' }); return; }
+  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL && !process.env.POSTGRES_PRISMA_URL) { res.status(500).json({ error: 'DATABASE_URL not set' }); return; }
 
   const { query } = body(req);
   if (!query || typeof query !== 'string') { res.status(400).json({ error: 'query required' }); return; }
