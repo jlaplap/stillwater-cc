@@ -380,7 +380,7 @@ function promptLogin(){
   const pw=m.querySelector('#lgpw'); pw.focus();
   const go=async()=>{
     let res; try{ res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw.value})}); }catch(e){ return; }
-    if(res.ok){ const d=await res.json(); WEB.token=d.token||''; try{sessionStorage.setItem('cc_token',WEB.token);}catch(e){} m.remove(); renderView(); }
+    if(res.ok){ const d=await res.json(); WEB.token=d.token||''; try{sessionStorage.setItem('cc_token',WEB.token);}catch(e){} state.adsData=null; m.remove(); renderView(); }
     else { m.querySelector('#lgerr').style.display='block'; }
   };
   m.querySelector('#lgbtn').onclick=go;
@@ -1269,7 +1269,7 @@ async function renderAds(c){
   $('#topActions').append(seg,rb);
 
   c.innerHTML='<div class="loading"><span class="spinner"></span> Pulling Meta spend across 3 ad accounts…</div>';
-  let perAccount=state.adsData && state.adsData.range===state.adsRange ? state.adsData.perAccount : null;
+  let perAccount=state.adsData && state.adsData.range===state.adsRange && !state.adsData.perAccount.some(p=>p.error) ? state.adsData.perAccount : null;
   if(!perAccount){
     perAccount=[];
     for(const acct of AD_ACCOUNTS){
